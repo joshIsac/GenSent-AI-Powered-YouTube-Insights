@@ -1,0 +1,380 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EngageBot X - YouTube Analytics Assistant</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <!-- Custom Styles -->
+  <style>
+    .chat-message-appear {
+      animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  
+    /* Custom scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+  
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #374151;
+      border-radius: 3px;
+    }
+  
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #4B5563;
+      border-radius: 3px;
+    }
+  
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #6B7280;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 min-h-screen text-white">
+  <!-- Loading Overlay -->
+  <div id="loading_overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="text-center">
+      <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500 mb-4"></div>
+      <p class="text-purple-300">Processing your request...</p>
+    </div>
+  </div>
+
+  <!-- Error Toast -->
+  <div id="error_toast" class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50 transition-all duration-300">
+    <div class="flex items-center">
+      <i class="fas fa-exclamation-circle mr-2"></i>
+      <span id="error_message">Error message here</span>
+    </div>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="bg-gray-800 border-b border-gray-700 p-4 shadow-lg sticky top-0 z-40">
+    <div class="container mx-auto flex justify-between items-center">
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center">
+          <i class="fas fa-robot text-purple-400 text-2xl mr-2"></i>
+          <h1 class="text-xl font-bold text-purple-400">EngageBot X</h1>
+        </div>
+        <div class="flex space-x-2">
+          <div class="relative">
+            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+            <input type="text" 
+                   id="channel_search" 
+                   placeholder="Enter your channel name" 
+                   class="bg-gray-700 text-white pl-10 pr-4 py-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none w-64">
+          </div>
+          <select id="genre_select" 
+                  class="bg-gray-700 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+            <option value="">Select Genre</option>
+            <option value="gaming">Gaming</option>
+            <option value="technology">Technology</option>
+            <option value="education">Education</option>
+            <option value="entertainment">Entertainment</option>
+            <option value="music">Music</option>
+            <option value="lifestyle">Lifestyle</option>
+            <option value="sports">Sports</option>
+            <option value="food">Food & Cooking</option>
+            <option value="travel">Travel</option>
+            <option value="science">Science</option>
+            <option value="arts">Arts & Crafts</option>
+            <option value="business">Business</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <button class="bg-purple-600 px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors duration-200 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                id="analyze_button" disabled>
+          <i class="fas fa-chart-line mr-2"></i>
+          Analyze Channel
+        </button>
+        <button class="text-gray-300 hover:text-white transition-colors duration-200" id="clear_chat">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container mx-auto mt-8 px-4 flex gap-4 mb-8">
+    <!-- Left Sidebar - Analytics -->
+    <div class="w-1/4 bg-gray-800 rounded-lg shadow-lg p-4 h-fit sticky top-24">
+      <div class="flex items-center mb-4">
+        <i class="fas fa-chart-bar text-purple-400 mr-2"></i>
+        <h2 class="text-lg font-bold">Channel Analytics</h2>
+      </div>
+      <div class="space-y-4" id="analytics_container">
+        <div class="bg-gray-700 p-4 rounded-lg transition-all duration-200 hover:bg-gray-600">
+          <h3 class="text-sm font-semibold text-purple-300">
+            <i class="fas fa-users mr-2"></i>Subscribers
+          </h3>
+          <p class="text-2xl font-bold" id="subscribers_count">-</p>
+        </div>
+        <div class="bg-gray-700 p-4 rounded-lg transition-all duration-200 hover:bg-gray-600">
+          <h3 class="text-sm font-semibold text-purple-300">
+            <i class="fas fa-eye mr-2"></i>Total Views
+          </h3>
+          <p class="text-2xl font-bold" id="total_views">-</p>
+        </div>
+        <div class="bg-gray-700 p-4 rounded-lg transition-all duration-200 hover:bg-gray-600">
+          <h3 class="text-sm font-semibold text-purple-300">
+            <i class="fas fa-video mr-2"></i>Videos
+          </h3>
+          <p class="text-2xl font-bold" id="video_count">-</p>
+        </div>
+        <div class="bg-gray-700 p-4 rounded-lg">
+          <h3 class="text-purple-400 font-medium mb-2">
+            <i class="fas fa-star mr-2"></i>Top Performing Content
+          </h3>
+          <div class="text-gray-300 space-y-2" id="top_content">
+            <p class="text-sm">No data available</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center - Chatbot Interface -->
+    <div class="flex-1 bg-gray-800 rounded-lg shadow-lg p-4">
+      <div class="h-[600px] flex flex-col">
+        <div class="flex-1 overflow-y-auto mb-4 space-y-4 p-4 custom-scrollbar" id="chat_container">
+          <!-- Chat messages will be inserted here -->
+        </div>
+        <div class="border-t border-gray-700 p-4">
+          <form id="chat_form" class="flex space-x-4">
+            <div class="flex-1 relative">
+              <input type="text" 
+                     id="user_input"
+                     placeholder="Ask about content strategy, SEO, engagement..." 
+                     class="w-full bg-gray-700 pl-4 pr-10 py-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+              <button type="button" 
+                      id="voice_input"
+                      class="absolute right-3 top-2 text-gray-400 hover:text-purple-400 transition-colors duration-200">
+                <i class="fas fa-microphone"></i>
+              </button>
+            </div>
+            <button type="submit" 
+                    id="send_button"
+                    class="bg-purple-600 px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors duration-200 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled>
+              <i class="fas fa-paper-plane mr-2"></i>
+              Send
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar - Recommendations -->
+    <div class="w-1/4 bg-gray-800 rounded-lg shadow-lg p-4 h-fit sticky top-24">
+      <div class="flex items-center mb-4">
+        <i class="fas fa-lightbulb text-purple-400 mr-2"></i>
+        <h2 class="text-lg font-bold">Recommendations</h2>
+      </div>
+      <div class="space-y-4" id="recommendations">
+        <div class="bg-gray-700 p-4 rounded-lg">
+          <p class="text-sm font-semibold">No recommendations yet</p>
+          <p class="text-xs text-gray-400 mt-2">Select your channel and genre to see personalized recommendations</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Utility Functions
+    function showLoading() {
+      document.getElementById('loading_overlay').classList.remove('hidden');
+      document.getElementById('loading_overlay').classList.add('flex');
+    }
+  
+    function hideLoading() {
+      document.getElementById('loading_overlay').classList.add('hidden');
+      document.getElementById('loading_overlay').classList.remove('flex');
+    }
+  
+    function showError(message, duration = 5000) {
+      const toast = document.getElementById('error_toast');
+      document.getElementById('error_message').textContent = message;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, duration);
+    }
+  
+    function updateButtonStates() {
+      const userInput = document.getElementById('user_input').value.trim();
+      const analyzeButton = document.getElementById('analyze_button');
+      const sendButton = document.getElementById('send_button');
+  
+      // Enable the buttons based on input conditions
+      sendButton.disabled = !userInput;
+      analyzeButton.disabled = !document.getElementById('channel_search').value.trim() || !document.getElementById('genre_select').value;
+    }
+  
+    // Initialize chat with a welcome message
+    function initializeChat() {
+      const welcomeMessage = {
+        icon: '<i class="fas fa-robot text-purple-400 mr-2"></i>',
+        title: 'EngageBot X',
+        messages: [
+          'Welcome to EngageBot X! I can help you with:',
+          '• Content strategy optimization',
+          '• Audience engagement analysis',
+          '• SEO recommendations',
+          '• Performance metrics',
+          '• Trending topics insights',
+          '',
+          'To get started, please enter your channel name and genre above, or ask me a specific question about content creation.'
+        ]
+      };
+  
+      const chatContainer = document.getElementById('chat_container');
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('bg-gray-700', 'p-4', 'rounded-lg', 'max-w-md', 'mx-auto', 'text-white', 'shadow-lg', 'chat-message-appear');
+      messageDiv.innerHTML = `
+        <div class="flex">
+          ${welcomeMessage.icon}
+          <div class="ml-2">
+            <p class="font-bold">${welcomeMessage.title}</p>
+            <div class="text-sm mt-2 space-y-2">
+              ${welcomeMessage.messages.map(msg => `<p>${msg}</p>`).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+      chatContainer.appendChild(messageDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  
+    // Helper to add messages to the chat
+    function addMessageToChat(message, isUser = false) {
+      const chatContainer = document.getElementById('chat_container');
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('bg-gray-700', 'p-4', 'rounded-lg', 'max-w-md', 'mx-auto', 'text-white', 'shadow-lg', 'chat-message-appear');
+      if (isUser) {
+        messageDiv.classList.add('bg-purple-600');
+      }
+      messageDiv.innerHTML = `
+        <div class="flex">
+          ${isUser ? '' : '<i class="fas fa-robot text-purple-400 mr-2"></i>'}
+          <div class="ml-2">
+            <p class="font-bold">${isUser ? 'You' : 'EngageBot X'}</p>
+            <p>${message}</p>
+          </div>
+        </div>
+      `;
+      chatContainer.appendChild(messageDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeChat();
+  
+      // Update send button state based on user input
+      document.getElementById('user_input').addEventListener('input', updateButtonStates);
+  
+      // Handle chat form submission with the correct API endpoint and payload
+      document.getElementById('chat_form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const userInput = document.getElementById('user_input').value.trim();
+        if (!userInput) return;
+  
+        addMessageToChat(userInput, true);
+        document.getElementById('user_input').value = '';
+        updateButtonStates();
+  
+        try {
+          showLoading();
+          const channelName = document.getElementById('channel_search').value.trim() || null;
+  
+          // Use the correct endpoint and send user_input and channel_name for chat
+          const response = await fetch('/api/chatbot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_input: userInput,
+              channel_name: channelName
+            })
+          });
+          const data = await response.json();
+          addMessageToChat(data.bot_response);
+  
+        } catch (error) {
+          showError('An error occurred while processing your request.');
+        } finally {
+          hideLoading();
+        }
+      });
+  
+      // Enable the Analyze button when both channel name and genre are provided
+      const channelSearch = document.getElementById('channel_search');
+      const genreSelect = document.getElementById('genre_select');
+      const analyzeButton = document.getElementById('analyze_button');
+  
+      function updateAnalyzeButtonState() {
+        analyzeButton.disabled = !channelSearch.value.trim() || !genreSelect.value;
+      }
+  
+      channelSearch.addEventListener('input', updateAnalyzeButtonState);
+      genreSelect.addEventListener('change', updateAnalyzeButtonState);
+  
+      // Event listener for Analyze Channel button
+      analyzeButton.addEventListener('click', async () => {
+        const channelName = channelSearch.value.trim();
+        const genre = genreSelect.value;
+  
+        if (!channelName || !genre) {
+          showError('Please enter a channel name and select a genre.');
+          return;
+        }
+  
+        showLoading();
+        try {
+          const response = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              channel_name: channelName,
+              genre: genre
+            })
+          });
+          const data = await response.json();
+          // Update analytics sidebar with received data
+          document.getElementById('subscribers_count').innerText = data.subscribers || '-';
+          document.getElementById('total_views').innerText = data.total_views || '-';
+          document.getElementById('video_count').innerText = data.video_count || '-';
+          document.getElementById('top_content').innerHTML = data.top_content || '<p class="text-sm">No data available</p>';
+          if (data.recommendations) {
+            const recHtml = data.recommendations.map(item => `<li>${item}</li>`).join('');
+            document.getElementById('recommendations').innerHTML = `<ul class="text-xs text-gray-400">${recHtml}</ul>`;
+          }
+        } catch (error) {
+          showError('Error analyzing channel.');
+          console.error(error);
+        } finally {
+          hideLoading();
+        }
+      });
+  
+      // Clear chat on clicking the clear chat button
+      document.getElementById('clear_chat').addEventListener('click', () => {
+        document.getElementById('chat_container').innerHTML = '';
+        initializeChat();
+      });
+    });
+  </script>
+  
+  </body>
+</html>

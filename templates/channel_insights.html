@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Channel Insights Dashboard</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #0e0e0e, #1f2937), url('https://cdn.pixabay.com/photo/2019/08/20/18/24/artificial-intelligence-4417546_1280.jpg');
+      background-size: cover;
+      background-blend-mode: multiply;
+    }
+    .nav-fixed { backdrop-filter: blur(10px); }
+    .card-hover:hover { transform: translateY(-5px) scale(1.02); transition: transform 0.3s ease; }
+    .animate-fadeIn { animation: fadeIn 0.8s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .search-input-container { position: relative; }
+    .search-icon { position: absolute; top: 50%; left: 0.75rem; transform: translateY(-50%); pointer-events: none; color: #cbd5e0; }
+    .search-input { padding-left: 2.5rem; padding-top: 0.5rem; padding-bottom: 0.5rem; font-size: 1rem; }
+    .quantum-spinner { border: 4px solid rgba(255, 255, 255, 0.2); border-top-color: #f87171; border-radius: 50%; width: 3rem; height: 3rem; animation: quantumSpin 1s linear infinite; }
+    @keyframes quantumSpin { to { transform: rotate(360deg); } }
+    .chart-large { height: 360px; }
+    .chart-small { height: 180px; }
+    #choroplethMap, .pie-chart { height: 240px; }
+    .health-score { font-size: 1.5rem; color: #10b981; }
+    #dashboard { display: grid; grid-template-columns: repeat(1, 1fr); gap: 1.5rem; }
+    @media (min-width: 1024px) { #dashboard { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body class="text-white">
+  <nav class="fixed top-0 inset-x-0 z-50 bg-gray-900 bg-opacity-80 nav-fixed shadow-lg">
+    <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-extrabold tracking-wide">Channel Insights</h1>
+      <div class="space-x-6">
+        <a href="/" class="hover:text-red-400 transition">Home</a>
+        <a href="#dashboard" class="hover:text-red-400 transition">Dashboard</a>
+        <a href="#stats" class="hover:text-red-400 transition">Stats</a>
+        <a href="#videos" class="hover:text-red-400 transition">Videos</a>
+        <a href="#competitors" class="hover:text-red-400 transition">Competitors</a>
+        <a href="#demographics" class="hover:text-red-400 transition">Demographics</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="pt-24 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-4xl sm:text-5xl font-extrabold mb-6 text-center tracking-wide">Channel Insights Dashboard</h1>
+
+    <div class="bg-gray-800 bg-opacity-90 p-6 rounded-3xl shadow-2xl mb-6 animate-fadeIn max-w-2xl mx-auto">
+      <label for="channelName" class="block text-xl font-medium mb-3">YouTube Channel Name</label>
+      <div class="search-input-container mb-4">
+        <svg class="search-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <input type="text" id="channelName" placeholder="Enter YouTube Channel Name" class="search-input w-full p-2 rounded border border-gray-600 bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-red-600" />
+      </div>
+      <button onclick="analyzeChannel()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded transition duration-300">
+        Analyze Channel
+      </button>
+    </div>
+
+    <div id="results" class="hidden animate-fadeIn">
+      <div id="stats" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-gray-800 bg-opacity-90 p-4 rounded-3xl shadow-2xl card-hover">
+          <h3 class="text-lg font-bold mb-2">Subscribers</h3>
+          <p id="subscriberCount" class="text-2xl text-red-400 font-extrabold">-</p>
+        </div>
+        <div class="bg-gray-800 bg-opacity-90 p-4 rounded-3xl shadow-2xl card-hover">
+          <h3 class="text-lg font-bold mb-2">Total Views</h3>
+          <p id="viewCount" class="text-2xl text-red-400 font-extrabold">-</p>
+        </div>
+        <div class="bg-gray-800 bg-opacity-90 p-4 rounded-3xl shadow-2xl card-hover">
+          <h3 class="text-lg font-bold mb-2">Total Videos</h3>
+          <p id="videoCount" class="text-2xl text-red-400 font-extrabold">-</p>
+        </div>
+        <div class="bg-gray-800 bg-opacity-90 p-4 rounded-3xl shadow-2xl card-hover">
+          <h3 class="text-lg font-bold mb-2">Health Score</h3>
+          <p id="healthScore" class="health-score">-</p>
+        </div>
+      </div>
+
+      <div id="dashboard" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-gray-800 bg-opacity-90 p-4 rounded-3xl shadow-2xl card-hover">
+          <h2 class="text-xl font-bold mb-3">Performance</h2>
+          <canvas id="performanceChart" class="w-full chart-large"></canvas>
+        </div>
+        <div class="bg-gray-800 bg-opacity-90 p-4 rounded-3xl shadow-2xl card-hover">
+          <h2 class="text-xl font-bold mb-3">Spike Trends</h2>
+          <canvas id="spikeTrendChart" class="w-full chart-large"></canvas>
+        </div>
+        <div class="bg-gray-800 bg-opacity-90 p-4 rounded-3xl shadow-2xl card-hover">
+          <h2 class="text-xl font-bold mb-3">Engagement</h2>
+          <canvas id="engagementChart" class="w-full chart-large"></canvas>
+        </div>
+        <div class="bg-gray-800 bg-opacity-90 p-4 rounded-3xl shadow-2xl card-hover">
+          <h2 class="text-xl font-bold mb-3">Metrics</h2>
+          <canvas id="metricsDistributionChart" class="w-full chart-small"></canvas>
+        </div>
+        <div class="bg-gray-800 bg-opacity-90 p-4 rounded-3xl shadow-2xl card-hover">
+          <h2 class="text-xl font-bold mb-3">Consistency Index</h2>
+          <canvas id="consistencyChart" class="w-full chart-small"></canvas>
+        </div>
+      </div>
+
+      <div id="videos" class="bg-gray-800 bg-opacity-90 p-4 rounded-3xl shadow-2xl mb-6 card-hover">
+        <h2 class="text-xl font-bold mb-3">Recent Videos</h2>
+        <div class="overflow-x-auto">
+          <table class="min-w-full table-auto text-sm">
+            <thead>
+              <tr class="bg-gray-700">
+                <th class="px-3 py-2 text-left">Title</th>
+                <th class="px-3 py-2 text-right">Views</th>
+                <th class="px-3 py-2 text-right">Likes</th>
+                <th class="px-3 py-2 text-right">Comments</th>
+                <th class="px-3 py-2 text-right">Date</th>
+              </tr>
+            </thead>
+            <tbody id="recentVideos"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="competitors" class="bg-gray-800 bg-opacity-90 p-4 rounded-3xl shadow-2xl mb-6 card-hover">
+        <h2 class="text-xl font-bold mb-3">Competitors</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4" id="competitorStats"></div>
+        <canvas id="competitorChart" class="w-full chart-large"></canvas>
+      </div>
+
+      <div id="demographics" class="bg-gray-800 bg-opacity-90 p-4 rounded-3xl shadow-2xl mb-6 card-hover">
+        <h2 class="text-xl font-bold mb-3">Audience Demographics</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+          <div>
+            <h3 class="text-lg font-bold mb-2">Age Range</h3>
+            <p id="ageRange" class="text-base text-red-400">-</p>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold mb-2">Interests</h3>
+            <p id="interests" class="text-base text-red-400">-</p>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold mb-2">Locations</h3>
+            <p id="locations" class="text-base text-red-400">-</p>
+          </div>
+        </div>
+        <h3 class="text-lg font-bold mb-2">Viewer Distribution</h3>
+        <div id="choroplethMap" class="mb-4"></div>
+        <h3 class="text-lg font-bold mb-2">Age by Region</h3>
+        <div id="agePieCharts" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+      </div>
+    </div>
+
+    <div id="loading" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50">
+      <div class="quantum-spinner"></div>
+    </div>
+  </div>
+
+  <script>
+    // Global instances to manage charts and map
+    let performanceChart = null;
+    let spikeTrendChart = null;
+    let engagementChart = null;
+    let metricsDistributionChart = null;
+    let consistencyChart = null;
+    let competitorChart = null;
+    let pieCharts = [];
+    let map = null;
+
+    // Function to initialize the Leaflet map
+    function initMap(data) {
+      if (map) {
+        map.remove();
+      }
+      map = L.map('choroplethMap').setView([20, 0], 2);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch GeoJSON');
+          return res.json();
+        })
+        .then(geojson => {
+          const getColor = percentage => {
+            return percentage > 50 ? '#800026' :
+                   percentage > 40 ? '#BD0026' :
+                   percentage > 30 ? '#E31A1C' :
+                   percentage > 20 ? '#FC4E2A' :
+                   percentage > 10 ? '#FD8D3C' :
+                   percentage > 5  ? '#FEB24C' :
+                   percentage > 0  ? '#FED976' : '#FFEDA0';
+          };
+
+          L.geoJSON(geojson, {
+            style: feature => {
+              const countryName = feature.properties.ADMIN;
+              const demo = (data.user_demographics.geographic_distribution || []).find(d => d.country === countryName);
+              const percentage = demo ? demo.percentage : 0;
+              return {
+                fillColor: getColor(percentage),
+                weight: 1,
+                opacity: 1,
+                color: 'white',
+                fillOpacity: 0.7
+              };
+            },
+            onEachFeature: (feature, layer) => {
+              const countryName = feature.properties.ADMIN;
+              const demo = (data.user_demographics.geographic_distribution || []).find(d => d.country === countryName);
+              const percentage = demo ? demo.percentage : 0;
+              layer.bindPopup(`${countryName}: ${percentage}% viewers`);
+            }
+          }).addTo(map);
+
+          // Add Markers for Top Locations
+          const locationCoords = {
+            'United States': [37.0902, -95.7129],
+            'United Kingdom': [55.3781, -3.4360],
+            'India': [20.5937, 78.9629],
+            'Canada': [56.1304, -106.3468],
+            'Australia': [-25.2744, 133.7751],
+            'Germany': [51.1657, 10.4515],
+            'France': [46.6031, 1.8883],
+            'Japan': [36.2048, 138.2529],
+            'Brazil': [-14.2350, -51.9253]
+          };
+
+          (data.user_demographics.top_locations || []).forEach(location => {
+            const coords = locationCoords[location];
+            if (coords) {
+              const marker = L.marker(coords).addTo(map);
+              const percentage = (data.user_demographics.geographic_distribution || []).find(d => d.country === location)?.percentage || 0;
+              marker.bindPopup(`<b>${location}</b><br>Viewers: ${percentage}%`);
+            }
+          });
+
+          // Ensure map resizes correctly
+          setTimeout(() => map.invalidateSize(), 100);
+        })
+        .catch(err => {
+          console.error('GeoJSON fetch failed:', err);
+          // Fallback: Add markers without choropleth
+          const locationCoords = {
+            'United States': [37.0902, -95.7129],
+            'United Kingdom': [55.3781, -3.4360],
+            'India': [20.5937, 78.9629],
+            'Canada': [56.1304, -106.3468],
+            'Australia': [-25.2744, 133.7751],
+            'Germany': [51.1657, 10.4515],
+            'France': [46.6031, 1.8883],
+            'Japan': [36.2048, 138.2529],
+            'Brazil': [-14.2350, -51.9253]
+          };
+          (data.user_demographics.top_locations || []).forEach(location => {
+            const coords = locationCoords[location];
+            if (coords) {
+              const marker = L.marker(coords).addTo(map);
+              const percentage = (data.user_demographics.geographic_distribution || []).find(d => d.country === location)?.percentage || 0;
+              marker.bindPopup(`<b>${location}</b><br>Viewers: ${percentage}%`);
+            }
+          });
+          setTimeout(() => map.invalidateSize(), 100);
+        });
+    }
+
+    async function analyzeChannel() {
+      const channelName = document.getElementById('channelName').value;
+      if (!channelName) {
+        alert('Please enter a channel name.');
+        return;
+      }
+
+      document.getElementById('loading').classList.remove('hidden');
+      document.getElementById('results').classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/analyze-channel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ channel_name: channelName })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP error! Status: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('API Response:', data);
+
+        if (data.error) {
+          alert(data.error);
+          console.error('API Error:', data.error);
+          return;
+        }
+
+        // Update Channel Statistics
+        document.getElementById('subscriberCount').textContent = parseInt(data.channel_stats?.subscribers || 0).toLocaleString();
+        document.getElementById('viewCount').textContent = parseInt(data.channel_stats?.total_views || 0).toLocaleString();
+        document.getElementById('videoCount').textContent = parseInt(data.channel_stats?.total_videos || 0).toLocaleString();
+        document.getElementById('healthScore').textContent = data.channel_stats?.health_score !== undefined ? `${data.channel_stats.health_score}/100` : 'N/A';
+
+        // Recent Videos Table
+        const tbody = document.getElementById('recentVideos');
+        tbody.innerHTML = '';
+        (data.channel_stats?.recent_videos || []).forEach(video => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td class="px-3 py-2">${video.title || 'Untitled'}</td>
+            <td class="px-3 py-2 text-right">${parseInt(video.views || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right">${parseInt(video.likes || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right">${parseInt(video.comments || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right">${video.publishedAt ? new Date(video.publishedAt).toLocaleDateString() : '-'}</td>
+          `;
+          tbody.appendChild(row);
+        });
+
+        const videoTitles = (data.channel_stats?.recent_videos || []).map(v => v.title || 'Untitled');
+        const videoViews = (data.channel_stats?.recent_videos || []).map(v => parseInt(v.views || 0));
+        const videoLikes = (data.channel_stats?.recent_videos || []).map(v => parseInt(v.likes || 0));
+        const videoComments = (data.channel_stats?.recent_videos || []).map(v => parseInt(v.comments || 0));
+        const spikePercentages = (data.channel_stats?.recent_videos || []).map(v => parseFloat(v.spike_percentage || 0));
+
+        // Destroy existing instances to prevent errors
+        if (performanceChart) performanceChart.destroy();
+        if (spikeTrendChart) spikeTrendChart.destroy();
+        if (engagementChart) engagementChart.destroy();
+        if (metricsDistributionChart) metricsDistributionChart.destroy();
+        if (consistencyChart) consistencyChart.destroy();
+        if (competitorChart) competitorChart.destroy();
+        pieCharts.forEach(chart => chart.destroy());
+        pieCharts = [];
+
+        // Performance Overview Chart
+        const performanceCanvas = document.getElementById('performanceChart');
+        if (performanceCanvas) {
+          performanceChart = new Chart(performanceCanvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+              labels: videoTitles,
+              datasets: [
+                { label: 'Views', data: videoViews, backgroundColor: 'rgba(255, 99, 132, 0.7)', borderColor: 'rgba(255, 99, 132, 1)', borderWidth: 1 },
+                { label: 'Likes', data: videoLikes, backgroundColor: 'rgba(54, 162, 235, 0.7)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1 },
+                { label: 'Comments', data: videoComments, backgroundColor: 'rgba(75, 192, 192, 0.7)', borderColor: 'rgba(75, 192, 192, 1)', borderWidth: 1 }
+              ]
+            },
+            options: { responsive: true }
+          });
+        }
+
+        // Spike Trend Chart
+        const spikeTrendCanvas = document.getElementById('spikeTrendChart');
+        if (spikeTrendCanvas) {
+          spikeTrendChart = new Chart(spikeTrendCanvas.getContext('2d'), {
+            type: 'line',
+            data: {
+              labels: videoTitles,
+              datasets: [
+                { label: 'Spike %', data: spikePercentages, borderColor: 'rgba(255, 159, 64, 1)', backgroundColor: 'rgba(255, 159, 64, 0.4)', fill: true },
+                { label: 'Views', data: videoViews, borderColor: 'rgba(75, 192, 192, 1)', backgroundColor: 'rgba(75, 192, 192, 0.4)', fill: true }
+              ]
+            },
+            options: { responsive: true }
+          });
+        }
+
+        // Engagement Trends Chart
+        const engagementCanvas = document.getElementById('engagementChart');
+        if (engagementCanvas) {
+          engagementChart = new Chart(engagementCanvas.getContext('2d'), {
+            type: 'line',
+            data: {
+              labels: videoTitles,
+              datasets: [
+                { label: 'Likes', data: videoLikes, borderColor: 'rgba(255, 206, 86, 1)', fill: false },
+                { label: 'Comments', data: videoComments, borderColor: 'rgba(255, 99, 132, 1)', fill: false }
+              ]
+            },
+            options: { responsive: true }
+          });
+        }
+
+        // Channel Metrics Distribution Chart
+        const metricsCanvas = document.getElementById('metricsDistributionChart');
+        if (metricsCanvas) {
+          metricsDistributionChart = new Chart(metricsCanvas.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+              labels: ['Subscribers', 'Views', 'Videos'],
+              datasets: [{
+                data: [
+                  parseInt(data.channel_stats?.subscribers || 0),
+                  parseInt(data.channel_stats?.total_views || 0),
+                  parseInt(data.channel_stats?.total_videos || 0)
+                ],
+                backgroundColor: ['rgba(54, 162, 235, 0.8)', 'rgba(255, 99, 132, 0.8)', 'rgba(255, 206, 86, 0.8)']
+              }]
+            },
+            options: { responsive: true }
+          });
+        }
+
+        // Consistency Index Chart
+        const consistencyCanvas = document.getElementById('consistencyChart');
+        if (consistencyCanvas) {
+          consistencyChart = new Chart(consistencyCanvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+              labels: ['Consistency'],
+              datasets: [{
+                label: 'Index (0-100)',
+                data: [data.channel_stats?.consistency_index || 0],
+                backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                borderColor: 'rgba(16, 185, 129, 1)',
+                borderWidth: 1
+              }]
+            },
+            options: {
+              responsive: true,
+              scales: {
+                y: { 
+                  beginAtZero: true, 
+                  max: 100,
+                  ticks: { color: '#f8f9fa' },
+                  grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                x: { 
+                  ticks: { color: '#f8f9fa' },
+                  grid: { display: false }
+                }
+              },
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: context => `Consistency Index: ${context.raw}/100` } }
+              }
+            }
+          });
+        }
+
+        // Competitor Benchmarking
+        const compStatsDiv = document.getElementById('competitorStats');
+        compStatsDiv.innerHTML = '';
+        (data.competitor_benchmarking || []).forEach(comp => {
+          const compDiv = document.createElement('div');
+          compDiv.classList.add('bg-gray-700', 'p-4', 'rounded-lg');
+          compDiv.innerHTML = `
+            <h3 class="text-lg font-bold">${comp.title || 'Unknown'}</h3>
+            <p>Total Views: ${(comp.total_views || 0).toLocaleString()}</p>
+            <p>Avg Views: ${(comp.avg_views || 0).toLocaleString()}</p>
+            <p>Engagement: ${comp.engagement_rate || 0}%</p>
+            <p>Uploads: ${comp.upload_frequency || 0}/month</p>
+          `;
+          compStatsDiv.appendChild(compDiv);
+        });
+
+        const competitorCanvas = document.getElementById('competitorChart');
+        if (competitorCanvas) {
+          competitorChart = new Chart(competitorCanvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+              labels: (data.competitor_benchmarking || []).map(c => c.title || 'Unknown'),
+              datasets: [
+                { label: 'Avg Views', data: (data.competitor_benchmarking || []).map(c => c.avg_views || 0), backgroundColor: 'rgba(255, 159, 64, 0.7)', borderColor: 'rgba(255, 159, 64, 1)', borderWidth: 1 },
+                { label: 'Engagement (%)', data: (data.competitor_benchmarking || []).map(c => c.engagement_rate || 0), backgroundColor: 'rgba(75, 192, 192, 0.7)', borderColor: 'rgba(75, 192, 192, 1)', borderWidth: 1 }
+              ]
+            },
+            options: {
+              responsive: true,
+              scales: {
+                y: { beginAtZero: true, ticks: { color: '#f8f9fa' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                x: { ticks: { color: '#f8f9fa' }, grid: { display: false } }
+              }
+            }
+          });
+        }
+
+        // User Demographics (excluding map, handled separately)
+        if (!data.user_demographics) {
+          console.error('No demographics data received from API');
+          document.getElementById('ageRange').textContent = 'Error: No data';
+          document.getElementById('interests').textContent = 'Error: No data';
+          document.getElementById('locations').textContent = 'Error: No data';
+        } else {
+          document.getElementById('ageRange').textContent = data.user_demographics.estimated_age_range || '-';
+          document.getElementById('interests').textContent = (data.user_demographics.interests || []).join(', ') || '-';
+          document.getElementById('locations').textContent = (data.user_demographics.top_locations || []).join(', ') || '-';
+
+          // Pie Charts per Region
+          const pieChartsDiv = document.getElementById('agePieCharts');
+          pieChartsDiv.innerHTML = '';
+          const topCountries = (data.user_demographics.geographic_distribution || []).slice(0, 3);
+          topCountries.forEach((countryData, index) => {
+            const country = countryData.country;
+            const percentage = countryData.percentage;
+            const ageGroups = data.user_demographics.age_groups_per_country?.[country] || {
+              '13-24': percentage * 0.3, '18-34': percentage * 0.5, '25-44': percentage * 0.2
+            };
+
+            const pieDiv = document.createElement('div');
+            pieDiv.classList.add('flex', 'flex-col', 'items-center');
+            pieDiv.innerHTML = `<h4 class="text-base font-bold mb-2">${country} (${percentage}%)</h4><canvas id="pieChart${index}" class="pie-chart"></canvas>`;
+            pieChartsDiv.appendChild(pieDiv);
+
+            const pieCanvas = document.getElementById(`pieChart${index}`);
+            if (pieCanvas) {
+              const pieChart = new Chart(pieCanvas.getContext('2d'), {
+                type: 'pie',
+                data: {
+                  labels: Object.keys(ageGroups),
+                  datasets: [{
+                    data: Object.values(ageGroups),
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56']
+                  }]
+                },
+                options: { responsive: true }
+              });
+              pieCharts.push(pieChart);
+            }
+          });
+        }
+
+        // Show results and then initialize the map
+        document.getElementById('results').classList.remove('hidden');
+        if (data.user_demographics) {
+          initMap(data);
+        }
+
+      } catch (error) {
+        console.error('Fetch error:', error);
+        alert('Error analyzing channel: ' + error.message);
+      } finally {
+        document.getElementById('loading').classList.add('hidden');
+      }
+    }
+  </script>
+</body>
+</html>

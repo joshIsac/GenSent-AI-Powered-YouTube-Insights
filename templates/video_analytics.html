@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Analytics</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e293b;
+            --accent: #ef4444;
+            --accent-hover: #dc2626;
+            --accent-light: rgba(239, 68, 68, 0.1);
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --shadow: rgba(0, 0, 0, 0.25);
+            --gradient-start: #0f172a;
+            --gradient-end: #1e293b;
+            --glow: rgba(239, 68, 68, 0.3);
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: var(--text-primary);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, rgba(239, 68, 68, 0.1), transparent 70%);
+            animation: pulseGlow 8s infinite alternate;
+            z-index: -1;
+        }
+
+        @keyframes pulseGlow {
+            0% { opacity: 0.3; transform: scale(1); }
+            100% { opacity: 0.5; transform: scale(1.1); }
+        }
+
+        .analytics-card {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px var(--shadow), inset 0 0 10px rgba(239, 68, 68, 0.1);
+            transition: all 0.4s ease;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        .analytics-card:hover {
+            transform: translateY(-8px) rotateX(5deg) rotateY(5deg);
+            box-shadow: 0 15px 60px rgba(0, 0, 0, 0.35), inset 0 0 15px rgba(239, 68, 68, 0.2);
+        }
+
+        .stat-card {
+            background: rgba(15, 23, 42, 0.75);
+            border-radius: 16px;
+            border-left: 5px solid var(--accent);
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            perspective: 800px;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, var(--accent-light), transparent);
+            animation: rotateGlow 6s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes rotateGlow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stat-card .content {
+            position: relative;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover .content {
+            transform: translateZ(20px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--accent), var(--accent-hover));
+            color: white;
+            border-radius: 50px;
+            padding: 0.75rem 2rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 5px 15px var(--glow);
+            transition: all 0.4s ease;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.15);
+            transform: rotate(30deg);
+            transition: all 0.6s ease;
+        }
+
+        .btn-primary:hover::before {
+            top: 150%;
+            left: 150%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 25px var(--glow);
+        }
+
+        .search-input {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--text-primary);
+            border-radius: 12px;
+            transition: all 0.4s ease;
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .search-input:focus {
+            background: rgba(15, 23, 42, 0.95);
+            border-color: var(--accent);
+            box-shadow: 0 0 15px var(--glow), inset 0 0 8px rgba(239, 68, 68, 0.2);
+            transform: scale(1.02);
+        }
+
+        .chart-container {
+            position: relative;
+            z-index: 1;
+            background: radial-gradient(circle at center, rgba(239, 68, 68, 0.05), transparent);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid var(--accent-light);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            border-bottom-color: var(--accent);
+            animation: spin 0.8s ease-in-out infinite, glowPulse 1.5s infinite alternate;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes glowPulse {
+            0% { box-shadow: 0 0 10px var(--glow); }
+            100% { box-shadow: 0 0 20px var(--glow); }
+        }
+
+        .section-title {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 2rem;
+            text-shadow: 0 2px 10px var(--glow);
+        }
+
+        .section-title::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, var(--accent-light), transparent);
+            transform: translateX(-50%);
+            z-index: -1;
+            animation: pulse 4s infinite;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -10px;
+            width: 50px;
+            height: 4px;
+            background: linear-gradient(to right, var(--accent), transparent);
+            border-radius: 2px;
+            animation: slide 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: translateX(-50%) scale(1); opacity: 0.5; }
+            100% { transform: translateX(-50%) scale(1.2); opacity: 0; }
+        }
+
+        @keyframes slide {
+            0% { width: 0; }
+            50% { width: 50px; }
+            100% { width: 0; }
+        }
+
+        .icon-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-light), transparent);
+            box-shadow: 0 0 15px var(--glow);
+            position: relative;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-circle:hover {
+            transform: rotate(360deg) scale(1.1);
+        }
+
+        .stats-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            text-shadow: 0 0 10px var(--glow);
+        }
+
+        .stats-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            position: relative;
+        }
+
+        .header-container {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border-bottom: 5px solid var(--accent);
+            box-shadow: 0 10px 40px var(--shadow), inset 0 0 15px rgba(239, 68, 68, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(239, 68, 68, 0.05), transparent);
+            pointer-events: none;
+        }
+
+        .video-description {
+            max-height: 120px;
+            overflow-y: auto;
+            padding-right: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent) rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+
+        .video-description::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .video-description::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .video-description::-webkit-scrollbar-thumb {
+            background-color: var(--accent);
+            border-radius: 3px;
+        }
+
+        .animate-float {
+            animation: float 6s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 0.8; }
+            100% { transform: translateY(0) rotate(360deg); opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="min-h-screen py-10 px-6">
+    <div class="container mx-auto max-w-7xl relative">
+        <!-- Floating Particles -->
+        <div class="absolute inset-0 pointer-events-none overflow-hidden">
+            <div class="w-4 h-4 bg-red-500 rounded-full absolute animate-float" style="top: 10%; left: 20%; animation-delay: 0s;"></div>
+            <div class="w-3 h-3 bg-red-400 rounded-full absolute animate-float" style="top: 60%; left: 70%; animation-delay: 1s;"></div>
+            <div class="w-5 h-5 bg-red-300 rounded-full absolute animate-float" style="top: 80%; left: 40%; animation-delay: 2s;"></div>
+        </div>
+
+        <h1 class="text-4xl font-bold mb-2 text-white flex items-center">
+            <i class="fas fa-chart-line mr-3 text-red-500"></i>Video Analytics
+        </h1>
+        <p class="text-gray-400 mb-8">Detailed insights into your YouTube content performance</p>
+
+        <!-- Search Input -->
+        <div class="analytics-card p-6 mb-8">
+            <h2 class="section-title text-xl font-semibold text-white">
+                <i class="fas fa-search mr-2"></i>Search Video
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-gray-400 text-sm mb-2">Channel Name</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                            <i class="fas fa-user"></i>
+                        </span>
+                        <input type="text" id="channelName" placeholder="Enter YouTube Channel Name" 
+                               class="search-input w-full pl-10 pr-4 py-3 rounded-lg focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-2">Video Title</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                            <i class="fas fa-video"></i>
+                        </span>
+                        <input type="text" id="videoTitle" placeholder="Enter Video Title (Optional)" 
+                               class="search-input w-full pl-10 pr-4 py-3 rounded-lg focus:outline-none">
+                    </div>
+                </div>
+            </div>
+            <button onclick="analyzeVideo()" 
+                    class="btn-primary mt-6 w-full md:w-auto px-8 py-3 rounded-lg font-semibold flex items-center justify-center">
+                <i class="fas fa-chart-bar mr-2"></i>Analyze Video
+            </button>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" class="hidden">
+            <div class="header-container p-6 mb-8">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 mr-4">
+                        <div class="icon-circle w-12 h-12 text-xl">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow">
+                        <h2 id="videoTitleDisplay" class="text-2xl font-bold mb-1 text-white"></h2>
+                        <p id="publishDate" class="text-gray-400 text-sm mb-3"></p>
+                        <p id="videoDescription" class="text-gray-300 text-sm video-description"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="stat-card p-4">
+                    <div class="content flex items-center">
+                        <div class="icon-circle mr-4">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <div>
+                            <div class="stats-label">Views</div>
+                            <div id="viewCount" class="stats-value text-red-500"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card p-4">
+                    <div class="content flex items-center">
+                        <div class="icon-circle mr-4">
+                            <i class="fas fa-thumbs-up"></i>
+                        </div>
+                        <div>
+                            <div class="stats-label">Likes</div>
+                            <div id="likeCount" class="stats-value text-red-500"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card p-4">
+                    <div class="content flex items-center">
+                        <div class="icon-circle mr-4">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div>
+                            <div class="stats-label">Comments</div>
+                            <div id="commentCount" class="stats-value text-red-500"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card p-4">
+                    <div class="content flex items-center">
+                        <div class="icon-circle mr-4">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div>
+                            <div class="stats-label">Engagement Rate</div>
+                            <div id="engagementRate" class="stats-value text-red-500"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Multi-line Analytics Chart -->
+                <div class="analytics-card p-5 overflow-hidden">
+                    <h3 class="text-lg font-semibold mb-4 text-white">
+                        <i class="fas fa-chart-line mr-2 text-red-500"></i>Performance Trends
+                    </h3>
+                    <div class="chart-container" style="height: 280px;">
+                        <canvas id="multiLineChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Cumulative Growth Area Chart -->
+                <div class="analytics-card p-5 overflow-hidden">
+                    <h3 class="text-lg font-semibold mb-4 text-white">
+                        <i class="fas fa-chart-area mr-2 text-red-500"></i>Cumulative Growth
+                    </h3>
+                    <div class="chart-container" style="height: 280px;">
+                        <canvas id="areaChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Engagement Breakdown Pie Chart -->
+            <div class="analytics-card p-5 overflow-hidden">
+                <h3 class="text-lg font-semibold mb-4 text-white">
+                    <i class="fas fa-chart-pie mr-2 text-red-500"></i>Engagement Breakdown
+                </h3>
+                <div class="chart-container" style="height: 280px;">
+                    <canvas id="engagementBreakdownChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="hidden">
+            <div class="flex flex-col justify-center items-center py-16">
+                <div class="spinner mb-4"></div>
+                <p class="text-gray-400">Analyzing video data...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let multiLineChart, areaChart, engagementBreakdownChart;
+
+        async function analyzeVideo() {
+            const channelName = document.getElementById('channelName').value.trim();
+            const videoTitle = document.getElementById('videoTitle').value.trim();
+
+            if (!channelName) {
+                alert("Please enter a channel name.");
+                return;
+            }
+
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/analyze-video', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ channel_name: channelName, video_title: videoTitle || null })
+                });
+
+                const data = await response.json();
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                const video = Array.isArray(data) ? data[0] : data;
+                document.getElementById('videoTitleDisplay').textContent = video["Video Title"];
+                document.getElementById('publishDate').textContent = `Published on ${new Date(video["Published Date"]).toLocaleDateString()}`;
+                document.getElementById('videoDescription').textContent = video["Description"] || "No description available.";
+                document.getElementById('viewCount').textContent = parseInt(video["Views"]).toLocaleString();
+                document.getElementById('likeCount').textContent = parseInt(video["Likes"]).toLocaleString();
+                document.getElementById('commentCount').textContent = parseInt(video["Comments"]).toLocaleString();
+                document.getElementById('engagementRate').textContent = `${video["Engagement Rate (%)"]}%`;
+
+                document.getElementById('results').classList.remove('hidden');
+
+                renderCharts(data);
+            } catch (error) {
+                alert('An error occurred while analyzing the video');
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        function renderCharts(data) {
+            const videoStats = data[0] || data;
+            const ctx1 = document.getElementById('multiLineChart').getContext('2d');
+            if (multiLineChart) multiLineChart.destroy();
+
+            multiLineChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: data.map((v, i) => `Day ${i + 1}`),
+                    datasets: [
+                        { label: 'Views', data: data.map(v => v["Views"]), borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: false, tension: 0.3 },
+                        { label: 'Likes', data: data.map(v => v["Likes"]), borderColor: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.1)', fill: false, tension: 0.3 },
+                        { label: 'Comments', data: data.map(v => v["Comments"]), borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: false, tension: 0.3 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: 'rgba(255, 255, 255, 0.8)' }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            const ctx2 = document.getElementById('areaChart').getContext('2d');
+            if (areaChart) areaChart.destroy();
+
+            areaChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: data.map((v, i) => `Day ${i + 1}`),
+                    datasets: [{
+                        label: 'Cumulative Views',
+                        data: data.map((v, i) => data.slice(0, i + 1).reduce((sum, val) => sum + val["Views"], 0)),
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: 'rgba(255, 255, 255, 0.8)' }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            const ctx3 = document.getElementById('engagementBreakdownChart').getContext('2d');
+            if (engagementBreakdownChart) engagementBreakdownChart.destroy();
+
+            engagementBreakdownChart = new Chart(ctx3, {
+                type: 'pie',
+                data: {
+                    labels: ["Views", "Likes", "Comments"],
+                    datasets: [{
+                        data: [videoStats["Views"], videoStats["Likes"], videoStats["Comments"]],
+                        backgroundColor: ["#ef4444", "#22c55e", "#3b82f6"],
+                        borderColor: "rgba(30, 41, 59, 0.8)",
+                        borderWidth: 2
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { 
+                                color: 'rgba(255, 255, 255, 0.8)',
+                                padding: 20,
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

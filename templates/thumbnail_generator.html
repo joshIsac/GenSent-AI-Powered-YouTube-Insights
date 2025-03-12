@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thumbnail Insights</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        /* Your existing styles remain unchanged - they're awesome! */
+        body {
+            margin: 0;
+            overflow-x: hidden;
+            font-family: monospace;
+            color: #e5e7eb;
+            position: relative;
+        }
+        
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(125deg, #000000, #0a192f, #172a46, #001220);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        
+        .nodes-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .node {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background-color: rgba(0, 255, 255, 0.7);
+            border-radius: 50%;
+            box-shadow: 0 0 10px 2px rgba(0, 255, 255, 0.3);
+            animation: float 8s infinite;
+            opacity: 0.7;
+        }
+        
+        .glass {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            box-shadow: 0px 4px 20px rgba(0, 255, 255, 0.2);
+            border: 1px solid rgba(0, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .glass:hover {
+            box-shadow: 0px 4px 25px rgba(0, 255, 255, 0.4);
+            transform: translateY(-3px);
+        }
+        
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0) translateX(0); opacity: 0.2; }
+            25% { opacity: 0.7; }
+            50% { transform: translateY(-20px) translateX(20px); opacity: 0.5; }
+            75% { opacity: 0.3; }
+            100% { transform: translateY(0) translateX(0); opacity: 0.2; }
+        }
+        
+        .glow-text {
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.7);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.7); }
+            50% { text-shadow: 0 0 15px rgba(0, 255, 255, 0.9); }
+            100% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.7); }
+        }
+        
+        .glow-button {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .glow-button:before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(0, 255, 255, 0.1);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="background"></div>
+    
+    <!-- Neural Network Nodes -->
+    <div class="nodes-container" id="nodes-container"></div>
+    
+    <!-- Navbar -->
+    <nav class="fixed top-0 w-full bg-black bg-opacity-80 p-4 flex justify-between items-center shadow-lg z-10">
+        <h1 class="text-3xl font-bold text-cyan-400 tracking-widest glow-text">Neural Insights</h1>
+        <ul class="flex space-x-6">
+            <li><a href="#input-section" class="hover:text-cyan-300 transition duration-300">Home</a></li>
+            <li><a href="#about" class="hover:text-cyan-300 transition duration-300">About</a></li>
+            <li><a href="#output-section" class="hover:text-cyan-300 transition duration-300">Thumbnails</a></li>
+        </ul>
+    </nav>
+    
+    <div class="container mx-auto p-8 mt-20">
+        <!-- Input Section -->
+        <section id="input-section" class="glass p-8 mb-10">
+            <h2 class="text-2xl font-bold text-cyan-300 glow-text">Create Your Thumbnails</h2>
+            <form id="input-form" class="mt-4">
+                <textarea id="prompt" placeholder="Enter a description of your video (e.g., 'A tutorial on growing indoor plants')" class="w-full p-3 bg-gray-800 text-white rounded mb-4 focus:ring-2 focus:ring-cyan-400 focus:outline-none transition duration-300 h-32 resize-y"></textarea>
+                <button type="submit" class="w-full bg-cyan-400 text-black py-3 rounded hover:bg-cyan-300 glow-button transition duration-300">Generate Thumbnails</button>
+            </form>
+        </section>
+        
+        <!-- Output Section -->
+        <section id="output-section" class="glass p-8">
+            <h2 class="text-2xl font-bold text-cyan-300 glow-text">Thumbnail Suggestions</h2>
+            <div id="thumbnails-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-4"></div>
+            <!-- Removed analyticsChart since we're focusing on thumbnails -->
+        </section>
+        
+        <!-- About Section -->
+        <section id="about" class="glass p-8 mt-10">
+            <h2 class="text-2xl font-bold text-cyan-300 glow-text">About Neural Insights</h2>
+            <p class="mt-4">Neural Insights is an AI-powered tool that generates multiple YouTube thumbnail suggestions based on your video description.</p>
+        </section>
+    </div>
+    
+    <script>
+        // Create animated nodes (unchanged)
+        function createNodes() {
+            const container = document.getElementById('nodes-container');
+            const nodeCount = 50;
+            
+            for (let i = 0; i < nodeCount; i++) {
+                const node = document.createElement('div');
+                node.classList.add('node');
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                node.style.left = `${x}%`;
+                node.style.top = `${y}%`;
+                const delay = Math.random() * 5;
+                node.style.animationDelay = `${delay}s`;
+                const size = Math.random() * 4 + 1;
+                node.style.width = `${size}px`;
+                node.style.height = `${size}px`;
+                container.appendChild(node);
+            }
+            
+            setInterval(() => {
+                const canvas = document.createElement('canvas');
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                canvas.style.position = 'absolute';
+                canvas.style.top = '0';
+                canvas.style.left = '0';
+                canvas.style.pointerEvents = 'none';
+                canvas.style.opacity = '0.2';
+                canvas.style.zIndex = '-1';
+                
+                const ctx = canvas.getContext('2d');
+                const nodes = document.querySelectorAll('.node');
+                ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+                ctx.lineWidth = 0.5;
+                
+                for (let i = 0; i < 10; i++) {
+                    const node1 = nodes[Math.floor(Math.random() * nodes.length)];
+                    const node2 = nodes[Math.floor(Math.random() * nodes.length)];
+                    const rect1 = node1.getBoundingClientRect();
+                    const rect2 = node2.getBoundingClientRect();
+                    ctx.beginPath();
+                    ctx.moveTo(rect1.left + rect1.width/2, rect1.top + rect1.height/2);
+                    ctx.lineTo(rect2.left + rect2.width/2, rect2.top + rect2.height/2);
+                    ctx.stroke();
+                }
+                
+                container.appendChild(canvas);
+                setTimeout(() => canvas.remove(), 2000);
+            }, 3000);
+        }
+        
+        document.addEventListener('DOMContentLoaded', createNodes);
+        
+        // Form submission
+        document.getElementById('input-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const prompt = document.getElementById('prompt').value.trim();
+            if (!prompt) {
+                alert('Please enter a video description!');
+                return;
+            }
+            
+            const button = event.target.querySelector('button');
+            button.innerHTML = 'Generating...';
+            button.disabled = true;
+            
+            // Mock API call to simulate Stable Diffusion backend
+            setTimeout(() => {
+                const data = {
+                    thumbnails: [
+                        { url: "https://via.placeholder.com/150/00FFFF/000000?text=Thumbnail+1" },
+                        { url: "https://via.placeholder.com/150/00FFFF/000000?text=Thumbnail+2" },
+                        { url: "https://via.placeholder.com/150/00FFFF/000000?text=Thumbnail+3" },
+                        { url: "https://via.placeholder.com/150/00FFFF/000000?text=Thumbnail+4" }
+                    ],
+                    prompt: prompt
+                };
+                
+                displayThumbnails(data);
+                
+                button.innerHTML = 'Generate Thumbnails';
+                button.disabled = false;
+                document.getElementById('output-section').scrollIntoView({ behavior: 'smooth' });
+            }, 2000); // Longer timeout to mimic generation time
+        });
+        
+        function displayThumbnails(data) {
+            const thumbnailsContainer = document.getElementById('thumbnails-container');
+            thumbnailsContainer.innerHTML = '';
+            
+            data.thumbnails.forEach((thumbnail, index) => {
+                const imgContainer = document.createElement('div');
+                imgContainer.classList.add('glass', 'p-4', 'transition-all', 'duration-500', 'opacity-0');
+                imgContainer.style.transform = 'translateY(20px)';
+                
+                const img = document.createElement('img');
+                img.src = thumbnail.url;
+                img.alt = `Thumbnail ${index + 1}`;
+                img.classList.add('w-40', 'h-24', 'rounded-lg', 'object-cover');
+                
+                imgContainer.appendChild(img);
+                thumbnailsContainer.appendChild(imgContainer);
+                
+                // Animate in
+                setTimeout(() => {
+                    imgContainer.style.opacity = '1';
+                    imgContainer.style.transform = 'translateY(0)';
+                }, 100 * index);
+            });
+        }
+    </script>
+</body>
+</html>

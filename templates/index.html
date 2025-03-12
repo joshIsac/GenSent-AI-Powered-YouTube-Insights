@@ -1,0 +1,283 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GenSent: AI-Powered YouTube Insights</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/boxicons@2.0.7/css/boxicons.min.css" rel="stylesheet" />
+  <style>
+    /* Global Styles */
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      background: url('https://www.transparenttextures.com/patterns/black-linen.png'),
+                  linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: #f8f9fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    a { text-decoration: none; }
+
+    /* Navigation */
+    .navbar {
+      background: rgba(0, 0, 0, 0.85);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+    }
+    .nav-link {
+      font-size: 1.1rem;
+      margin-right: 15px;
+    }
+
+    /* Hero Section */
+    .hero-section {
+      background: linear-gradient(135deg, rgba(30,60,114,0.9) 0%, rgba(42,82,152,0.9) 100%);
+      padding: 80px 0;
+      margin-bottom: 50px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-section::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: url('https://www.transparenttextures.com/patterns/diagmonds.png');
+      opacity: 0.2;
+    }
+    .hero-section .container {
+      position: relative;
+      z-index: 2;
+    }
+    .hero-section h1 {
+      font-size: 3rem;
+      font-weight: 700;
+    }
+    .hero-section p {
+      font-size: 1.2rem;
+    }
+
+    /* Dashboard/Features Container */
+    .dashboard-container {
+      padding: 30px 0;
+    }
+    .feature-card {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    }
+    .feature-card .card-body {
+      padding: 2rem;
+    }
+    .feature-icon {
+      font-size: 50px;
+      margin-bottom: 15px;
+      color: #ffc107;
+    }
+    .card-title {
+      font-weight: 600;
+    }
+    .card-text {
+      font-size: 0.95rem;
+      margin-bottom: 15px;
+    }
+    .btn-explore {
+      background-color: #ffc107;
+      color: #2a5298;
+      border: none;
+      border-radius: 25px;
+      padding: 10px 20px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    .btn-explore:hover {
+      background-color: #e0a800;
+      transform: scale(1.05);
+    }
+
+    /* About Section */
+    .about-section {
+      background: rgba(0, 0, 0, 0.7);
+      padding: 50px 0;
+      margin-top: 50px;
+    }
+    .about-section h2 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+    .about-section p {
+      font-size: 1.1rem;
+    }
+
+    /* Footer */
+    .footer {
+      background-color: rgba(0, 0, 0, 0.9);
+      padding: 20px 0;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+      <a class="navbar-brand" href="#home">
+        <i class='bx bxl-youtube text-danger'></i> GenSent Analytics
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" 
+              aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="#home">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+          <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+          <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Home / Hero Section -->
+  <section id="home" class="hero-section text-center">
+    <div class="container">
+      <h1 class="display-4 mb-3">GenSent: AI-Powered YouTube Insights</h1>
+      <p class="lead">
+        Unlock deep insights into YouTube data using AI-driven analytics. Tailored for content creators, marketers, and researchers.
+      </p>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="dashboard-container container">
+    <h2 class="text-center mb-4">Our Features</h2>
+    <div class="row g-4">
+      <!-- Channel Insights -->
+      <div class="col-md-6 col-lg-4">
+        <div class="card feature-card text-center">
+          <div class="card-body">
+            <i class='bx bx-line-chart feature-icon'></i>
+            <h5 class="card-title">Channel Insights</h5>
+            <p class="card-text">Analyze performance metrics of any YouTube channel.</p>
+            <a href="/channel-insights" class="btn btn-explore">Explore</a>
+          </div>
+        </div>
+      </div>
+      <!-- Sentiment Analysis -->
+      <div class="col-md-6 col-lg-4">
+        <div class="card feature-card text-center">
+          <div class="card-body">
+            <i class='bx bx-message-square-detail feature-icon'></i>
+            <h5 class="card-title">Sentiment Analysis</h5>
+            <p class="card-text">Evaluate audience sentiment through AI-powered analysis.</p>
+            <a href="/sentiment-analysis" class="btn btn-explore">Analyze</a>
+          </div>
+        </div>
+      </div>
+      <!-- Video Analytics -->
+      <div class="col-md-6 col-lg-4">
+        <div class="card feature-card text-center">
+          <div class="card-body">
+            <i class='bx bx-video feature-icon'></i>
+            <h5 class="card-title">Video Analytics</h5>
+            <p class="card-text">Get in-depth insights into video performance and engagement.</p>
+            <a href="/video-analytics" class="btn btn-explore">Analyze</a>
+          </div>
+        </div>
+      </div>
+      <!-- Trending Videos -->
+      <div class="col-md-6 col-lg-4">
+        <div class="card feature-card text-center">
+          <div class="card-body">
+            <i class='bx bx-trending-up feature-icon'></i>
+            <h5 class="card-title">Trending Videos Analysis</h5>
+            <p class="card-text">Discover trending videos from various regions,Analyze trending topics and insights.</p>
+            <a href="/trending-videos" class="btn btn-explore">Explore</a>
+          </div>
+        </div>
+      </div>
+      <!-- Personalized Recommendations -->
+      <div class="col-md-6 col-lg-4">
+        <div class="card feature-card text-center">
+          <div class="card-body">
+            <i class='bx bx-play-circle feature-icon'></i>
+            <h5 class="card-title">Personalized Recommendations</h5>
+            <p class="card-text">Receive AI-driven video recommendations tailored for you.</p>
+            <a href="/personalized-recommendations" class="btn btn-explore">Discover</a>
+          </div>
+        </div>
+      </div>
+    
+          <!-- Speech & Transcript Analysis --> 
+          <div class="col-md-6 col-lg-4">
+            <div class="card feature-card text-center">
+              <div class="card-body">
+                <i class='bx bx-microphone feature-icon'></i>
+                <h5 class="card-title">Speech & Transcript Analysis</h5>
+                <p class="card-text">Extract insights from video speech content.</p>
+                <a href="/transcription-analysis" class="btn btn-explore">Analyze</a>
+              </div>
+            </div>
+          </div>
+          <!-- Multi-language Translation -->
+          <div class="col-md-6 col-lg-4">
+            <div class="card feature-card text-center">
+              <div class="card-body">
+                <i class='bx bx-globe feature-icon'></i>
+                <h5 class="card-title">Multi-language Translation</h5>
+                <p class="card-text">Translate comments & captions for global reach.</p>
+                <a href="/translation" class="btn btn-explore">Translate</a>
+              </div>
+            </div>
+          </div>
+          
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section id="about" class="about-section text-center">
+    <div class="container">
+      <h2>About GenSent</h2>
+      <p>
+        GenSent is an AI-powered YouTube analytics platform designed to empower content creators and marketers. 
+        Our suite of tools offers insights ranging from channel performance, video engagement, SEO optimization, 
+        to advanced trend analysis and content moderation. With GenSent, you gain a deeper understanding of your 
+        audience and can make data-driven decisions to boost your channel’s success.
+      </p>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contact" class="container py-5">
+    <div class="row">
+      <div class="col-md-8 mx-auto text-center">
+        <h2>Contact Us</h2>
+        <p>
+          Have questions or feedback? Reach out to us at 
+          <a href="mailto:support@gensent.com" class="text-decoration-underline text-light">support@gensent.com</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer text-center">
+    <div class="container">
+      <p class="mb-0">YouTube Analytics Platform © 2024</p>
+    </div>
+  </footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+</body>
+</html>

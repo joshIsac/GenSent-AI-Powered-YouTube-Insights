@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trending Videos Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background:black; /* Light gray-blue background for readability */
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Container for better visibility */
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+            background:darksalmon; /* White background for contrast */
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h2, h3 {
+            text-align: center;
+            color: #222;
+        }
+
+        /* Input Controls */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 15px;
+        }
+
+        select, input, button {
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: #fff;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f1f1f1;
+        }
+
+        /* Chart Container */
+        .charts-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .chart-box {
+            flex: 1 1 48%;
+            min-width: 300px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-box canvas {
+            max-height: 350px;
+        }
+
+
+    /* Report Container Styles */
+    #reportContainer {
+        margin-top: 30px;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #reportContent {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        overflow-y: auto;
+        max-height: 500px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        font-size: 14px;
+        line-height: 1.6;
+        font-family: 'Courier New', monospace;
+        border: 1px solid #ddd;
+        margin-top: 10px;
+        color: #333;
+    }
+
+    .report-buttons {
+        margin: 20px 0;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+
+    .report-buttons button {
+        min-width: 150px;
+        padding: 10px 20px;
+        transition: background-color 0.3s ease;
+    }
+
+    .report-buttons button:hover {
+        background: #0056b3;
+        transform: translateY(-1px);
+    }
+
+    #reportContainer h3 {
+        margin-bottom: 15px;
+        color: #333;
+        font-size: 1.2em;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📊 Trending Videos Analysis</h2>
+
+    <!-- Controls -->
+    <div class="controls">
+        <label for="regionSelect">Select a Region:</label>
+        <select id="regionSelect">
+            <option value="US">United States (US)</option>
+            <option value="GB">United Kingdom (GB)</option>
+            <option value="IN">India (IN)</option>
+            <option value="CA">Canada (CA)</option>
+            <option value="AU">Australia (AU)</option>
+            <option value="DE">Germany (DE)</option>
+            <option value="FR">France (FR)</option>
+            <option value="JP">Japan (JP)</option>
+            <option value="KR">South Korea (KR)</option>
+        </select>
+        <input type="text" id="regionCode" placeholder="Enter country code (e.g., BR)">
+        <button onclick="fetchTrendingVideos()">Analyze</button>
+    </div>
+
+    <!-- Trending Videos Table -->
+    <h3>🔥 Top Trending Videos</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Channel</th>
+                <th>Category</th>
+                <th>Views</th>
+                <th>Likes</th>
+                <th>Comments</th>
+                <th>Engagement Rate (%)</th>
+            </tr>
+        </thead>
+        <tbody id="trendingTableBody"></tbody>
+    </table>
+
+    <!-- Charts -->
+    <div class="charts-container">
+        <div class="chart-box">
+            <h3>📊 Engagement Breakdown</h3>
+            <canvas id="engagementChart"></canvas>
+        </div>
+        <div class="chart-box">
+            <h3>📈 Category Distribution</h3>
+            <canvas id="categoryChart"></canvas>
+        </div>
+        <div class="chart-box">
+            <h3>📉 Engagement Rate vs. Views</h3>
+            <canvas id="engagementRateChart"></canvas>
+        </div>
+        <div class="chart-box">
+            <h3>📊 Engagement Trends (Area Chart)</h3>
+            <canvas id="engagementAreaChart"></canvas>
+        </div>
+    </div>
+
+    <div class="report-buttons">
+        <button onclick="generateReport()">📝 Generate Report</button>
+        <button onclick="downloadReport()">⬇️ Download Report</button>
+    </div>
+    <div id="reportContainer">
+        <h3>📄 Generated Report</h3>
+        <pre id="reportContent"></pre>
+    </div>
+</div>
+
+<script>
+    let engagementChart, categoryChart, engagementRateChart, engagementAreaChart;
+
+    function fetchTrendingVideos() {
+        let regionCode = document.getElementById('regionCode').value || document.getElementById('regionSelect').value;
+
+        fetch('/api/analyze-trending', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ region_code: regionCode })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert("Error: " + data.error);
+                return;
+            }
+
+            let tableBody = document.getElementById('trendingTableBody');
+            tableBody.innerHTML = "";
+            data.trending_videos.forEach(video => {
+                let row = `<tr>
+                    <td>${video.title}</td>
+                    <td>${video.channel}</td>
+                    <td>${video.category}</td>
+                    <td>${video.views.toLocaleString()}</td>
+                    <td>${video.likes.toLocaleString()}</td>
+                    <td>${video.comments.toLocaleString()}</td>
+                    <td>${video.engagement_rate.toFixed(2)}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+
+            updateCharts(data.trending_videos, data.category_distribution);
+        })
+        .catch(error => console.error('Error fetching trending videos:', error));
+    }
+
+    function updateCharts(videos, categoryDistribution) {
+        let labels = videos.map(v => v.title);
+        let views = videos.map(v => v.views);
+        let engagementRates = videos.map(v => v.engagement_rate);
+        let categoryLabels = Object.keys(categoryDistribution);
+        let categoryValues = Object.values(categoryDistribution);
+
+        if (engagementChart) engagementChart.destroy();
+        if (categoryChart) categoryChart.destroy();
+        if (engagementRateChart) engagementRateChart.destroy();
+        if (engagementAreaChart) engagementAreaChart.destroy();
+
+        engagementChart = new Chart(document.getElementById('engagementChart').getContext('2d'), {
+            type: 'bar',
+            data: { labels, datasets: [{ label: 'Views', data: views, backgroundColor: 'red' }] }
+        });
+
+        categoryChart = new Chart(document.getElementById('categoryChart').getContext('2d'), {
+            type: 'pie',
+            data: { labels: categoryLabels, datasets: [{ data: categoryValues, backgroundColor: ['blue', 'green', 'red'] }] }
+        });
+
+        engagementRateChart = new Chart(document.getElementById('engagementRateChart').getContext('2d'), {
+            type: 'line',
+            data: { labels, datasets: [{ label: 'Engagement Rate (%)', data: engagementRates, borderColor: 'blue', backgroundColor: 'rgba(0,123,255,0.2)', fill: true }] }
+        });
+
+        engagementAreaChart = new Chart(document.getElementById('engagementAreaChart').getContext('2d'), {
+            type: 'line',
+            data: { labels, datasets: [{ label: 'Engagement Rate (%)', data: engagementRates, borderColor: 'green', backgroundColor: 'rgba(0,255,0,0.2)', fill: true }] }
+        });
+    }
+
+
+
+    function generateReport() {
+    // Grab the region from the correct element id
+    const selectedRegion = document.getElementById('regionSelect').value;
+    document.getElementById('reportContent').textContent = 'Generating report...';
+    
+    fetch('/api/generate-report', {  
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ region: selectedRegion })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("Received data:", data);
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        if (data.report) {
+            document.getElementById('reportContent').textContent = data.report;
+            console.log("Report displayed successfully");
+        } else {
+            throw new Error("No report data received");
+        }
+    })
+    .catch(error => {
+        console.error('Error in report generation:', error);
+        document.getElementById('reportContent').textContent = `Error generating report: ${error.message}`;
+    });
+    }
+
+
+
+
+
+    function downloadReport() {
+        fetch('/api/download-report')
+        .then(response => response.blob())
+        .then(blob => {
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'Trending_Report.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        })
+        .catch(error => console.error('Error downloading report:', error));
+    }
+</script>
+
+</body>
+</html>
