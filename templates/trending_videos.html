@@ -7,27 +7,102 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* Global Styles */
-        body {
-            font-family: Arial, sans-serif;
-            background:black; /* Light gray-blue background for readability */
-            color: #333;
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
 
-        /* Container for better visibility */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0f1a; /* Deep dark blue background */
+            color: #e0e0e0;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Animated Complex Background */
+        .animated-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #0f0f1a, #1a1a2e, #2a2a4a, #3a3a60);
+            animation: bgAnimation 15s ease infinite;
+            z-index: -1;
+            opacity: 0.8;
+        }
+
+        @keyframes bgAnimation {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            background: rgba(26, 26, 46, 0.9);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-transform: uppercase;
+        }
+
+        .navbar .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+        }
+
+        .navbar .nav-links li a {
+            color: #e0e0e0;
+            text-decoration: none;
+            font-size: 1.1rem;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+
+        .navbar .nav-links li a:hover {
+            color: #007BFF;
+            transform: translateY(-2px);
+        }
+
+        /* Main Content Container */
         .container {
-            max-width: 1200px;
-            margin: 30px auto;
-            padding: 20px;
-            background:darksalmon; /* White background for contrast */
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
+            max-width: 1400px;
+            margin: 60px auto 30px;
+            padding: 30px;
+            background: rgba(42, 42, 74, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+            position: relative;
+            z-index: 1;
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         h2, h3 {
             text-align: center;
-            color: #222;
+            color: #ffffff;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         /* Input Controls */
@@ -36,15 +111,32 @@
             justify-content: center;
             align-items: center;
             flex-wrap: wrap;
-            gap: 10px;
-            padding: 15px;
+            gap: 15px;
+            padding: 20px;
+            background: rgba(58, 58, 96, 0.8);
+            border-radius: 10px;
+            animation: slideUp 1s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         select, input, button {
-            padding: 10px;
+            padding: 12px;
             font-size: 14px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
+            border-radius: 8px;
+            border: 1px solid #555;
+            background: #2a2a4a;
+            color: #e0e0e0;
+            transition: all 0.3s ease;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #007BFF;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
         }
 
         button {
@@ -52,10 +144,12 @@
             color: white;
             border: none;
             cursor: pointer;
+            transition: all 0.3s ease;
         }
 
         button:hover {
             background: #0056b3;
+            transform: scale(1.05);
         }
 
         /* Table */
@@ -63,290 +157,390 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
-            background: #fff;
+            background: #2a2a4a;
+            animation: fadeInTable 1s ease-out;
+        }
+
+        @keyframes fadeInTable {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
+            border: 1px solid #555;
+            padding: 12px;
             text-align: left;
+            transition: background 0.3s ease;
         }
 
         th {
-            background-color: #f1f1f1;
+            background-color: #3a3a60;
+            color: #ffffff;
+        }
+
+        td:hover {
+            background: #3a3a60;
         }
 
         /* Chart Container */
         .charts-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            gap: 15px;
-            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+            animation: slideIn 1s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
         .chart-box {
-            flex: 1 1 48%;
-            min-width: 300px;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+            background: #2a2a4a;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+        }
+
+        .chart-box:hover {
+            transform: translateY(-5px);
         }
 
         .chart-box canvas {
             max-height: 350px;
         }
 
+        /* Report Container Styles */
+        #reportContainer {
+            margin-top: 40px;
+            background: #2a2a4a;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            animation: fadeInUp 1s ease-out;
+        }
 
-    /* Report Container Styles */
-    #reportContainer {
-        margin-top: 30px;
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
-    }
+        #reportContent {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-y: auto;
+            max-height: 500px;
+            padding: 15px;
+            background: #1a1a2e;
+            border-radius: 5px;
+            font-size: 14px;
+            line-height: 1.6;
+            font-family: 'Courier New', monospace;
+            border: 1px solid #555;
+            margin-top: 15px;
+            color: #e0e0e0;
+        }
 
-    #reportContent {
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        overflow-y: auto;
-        max-height: 500px;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 4px;
-        font-size: 14px;
-        line-height: 1.6;
-        font-family: 'Courier New', monospace;
-        border: 1px solid #ddd;
-        margin-top: 10px;
-        color: #333;
-    }
+        .report-buttons {
+            margin: 20px 0;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
 
-    .report-buttons {
-        margin: 20px 0;
-        display: flex;
-        gap: 10px;
-        justify-content: center;
-    }
+        .report-buttons button {
+            min-width: 150px;
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+        }
 
-    .report-buttons button {
-        min-width: 150px;
-        padding: 10px 20px;
-        transition: background-color 0.3s ease;
-    }
+        .report-buttons button:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
 
-    .report-buttons button:hover {
-        background: #0056b3;
-        transform: translateY(-1px);
-    }
+        #reportContainer h3 {
+            margin-bottom: 15px;
+            color: #ffffff;
+            font-size: 1.3em;
+            text-transform: uppercase;
+        }
 
-    #reportContainer h3 {
-        margin-bottom: 15px;
-        color: #333;
-        font-size: 1.2em;
-    }
-</style>
+        /* About Section */
+        .about-section {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 30px;
+            background: rgba(58, 58, 96, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+            animation: slideDown 1s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .about-section h2 {
+            color: #ffffff;
+            margin-bottom: 20px;
+        }
+
+        .about-section p {
+            font-size: 1.1rem;
+            color: #d0d0d0;
+            text-align: justify;
+        }
+    </style>
 </head>
 <body>
+    <div class="animated-background"></div>
 
-<div class="container">
-    <h2>📊 Trending Videos Analysis</h2>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="logo">GenSent Analytics</div>
+        <ul class="nav-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#trending">Trending Analysis</a></li>
+            <li><a href="#about">About</a></li>
+        </ul>
+    </nav>
 
-    <!-- Controls -->
-    <div class="controls">
-        <label for="regionSelect">Select a Region:</label>
-        <select id="regionSelect">
-            <option value="US">United States (US)</option>
-            <option value="GB">United Kingdom (GB)</option>
-            <option value="IN">India (IN)</option>
-            <option value="CA">Canada (CA)</option>
-            <option value="AU">Australia (AU)</option>
-            <option value="DE">Germany (DE)</option>
-            <option value="FR">France (FR)</option>
-            <option value="JP">Japan (JP)</option>
-            <option value="KR">South Korea (KR)</option>
-        </select>
-        <input type="text" id="regionCode" placeholder="Enter country code (e.g., BR)">
-        <button onclick="fetchTrendingVideos()">Analyze</button>
-    </div>
+    <!-- Home Section (Placeholder) -->
+    <section id="home" class="container" style="display: none;">
+        <h2>Welcome to GenSent Analytics</h2>
+        <p>
+            Discover powerful AI-driven insights for YouTube data analysis. Explore trending videos, channel performance, 
+            and more with our cutting-edge tools designed for creators, marketers, and researchers.
+        </p>
+        <button onclick="navigateToTrending()" style="margin-top: 20px;">Go to Trending Analysis</button>
+    </section>
 
-    <!-- Trending Videos Table -->
-    <h3>🔥 Top Trending Videos</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Channel</th>
-                <th>Category</th>
-                <th>Views</th>
-                <th>Likes</th>
-                <th>Comments</th>
-                <th>Engagement Rate (%)</th>
-            </tr>
-        </thead>
-        <tbody id="trendingTableBody"></tbody>
-    </table>
+    <!-- Trending Videos Analysis Section -->
+    <section id="trending" class="container">
+        <h2>📊 Trending Videos Analysis</h2>
 
-    <!-- Charts -->
-    <div class="charts-container">
-        <div class="chart-box">
-            <h3>📊 Engagement Breakdown</h3>
-            <canvas id="engagementChart"></canvas>
+        <!-- Controls -->
+        <div class="controls">
+            <label for="regionSelect">Select a Region:</label>
+            <select id="regionSelect">
+                <option value="US">United States (US)</option>
+                <option value="GB">United Kingdom (GB)</option>
+                <option value="IN">India (IN)</option>
+                <option value="CA">Canada (CA)</option>
+                <option value="AU">Australia (AU)</option>
+                <option value="DE">Germany (DE)</option>
+                <option value="FR">France (FR)</option>
+                <option value="JP">Japan (JP)</option>
+                <option value="KR">South Korea (KR)</option>
+            </select>
+            <input type="text" id="regionCode" placeholder="Enter country code (e.g., BR)">
+            <button onclick="fetchTrendingVideos()">Analyze</button>
         </div>
-        <div class="chart-box">
-            <h3>📈 Category Distribution</h3>
-            <canvas id="categoryChart"></canvas>
+
+        <!-- Trending Videos Table -->
+        <h3>🔥 Top Trending Videos</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Channel</th>
+                    <th>Category</th>
+                    <th>Views</th>
+                    <th>Likes</th>
+                    <th>Comments</th>
+                    <th>Engagement Rate (%)</th>
+                </tr>
+            </thead>
+            <tbody id="trendingTableBody"></tbody>
+        </table>
+
+        <!-- Charts -->
+        <div class="charts-container">
+            <div class="chart-box">
+                <h3>📊 Engagement Breakdown</h3>
+                <canvas id="engagementChart"></canvas>
+            </div>
+            <div class="chart-box">
+                <h3>📈 Category Distribution</h3>
+                <canvas id="categoryChart"></canvas>
+            </div>
+            <div class="chart-box">
+                <h3>📉 Engagement Rate vs. Views</h3>
+                <canvas id="engagementRateChart"></canvas>
+            </div>
+            <div class="chart-box">
+                <h3>📊 Engagement Trends (Area Chart)</h3>
+                <canvas id="engagementAreaChart"></canvas>
+            </div>
         </div>
-        <div class="chart-box">
-            <h3>📉 Engagement Rate vs. Views</h3>
-            <canvas id="engagementRateChart"></canvas>
+
+        <div class="report-buttons">
+            <button onclick="generateReport()">📝 Generate Report</button>
+            <button onclick="downloadReport()">⬇️ Download Report</button>
         </div>
-        <div class="chart-box">
-            <h3>📊 Engagement Trends (Area Chart)</h3>
-            <canvas id="engagementAreaChart"></canvas>
+        <div id="reportContainer">
+            <h3>📄 Generated Report</h3>
+            <pre id="reportContent"></pre>
         </div>
-    </div>
+    </section>
 
-    <div class="report-buttons">
-        <button onclick="generateReport()">📝 Generate Report</button>
-        <button onclick="downloadReport()">⬇️ Download Report</button>
-    </div>
-    <div id="reportContainer">
-        <h3>📄 Generated Report</h3>
-        <pre id="reportContent"></pre>
-    </div>
-</div>
+    <!-- About Section -->
+    <section id="about" class="about-section">
+        <h2>About GenSent Analytics</h2>
+        <p>
+            GenSent Analytics is an advanced AI-powered platform designed to revolutionize YouTube data analysis. 
+            Our suite of tools provides deep insights into trending videos, channel performance, engagement metrics, 
+            and more, tailored for content creators, marketers, and researchers worldwide. Leveraging cutting-edge 
+            machine learning algorithms, we help you uncover actionable insights to boost your YouTube success. 
+            Our mission is to empower users with data-driven decisions in an ever-evolving digital landscape.
+        </p>
+    </section>
 
-<script>
-    let engagementChart, categoryChart, engagementRateChart, engagementAreaChart;
+    <script>
+        let engagementChart, categoryChart, engagementRateChart, engagementAreaChart;
 
-    function fetchTrendingVideos() {
-        let regionCode = document.getElementById('regionCode').value || document.getElementById('regionSelect').value;
+        function navigateToTrending() {
+            document.getElementById('home').style.display = 'none';
+            document.getElementById('trending').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
-        fetch('/api/analyze-trending', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ region_code: regionCode })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                alert("Error: " + data.error);
-                return;
-            }
+        function fetchTrendingVideos() {
+            let regionCode = document.getElementById('regionCode').value || document.getElementById('regionSelect').value;
 
-            let tableBody = document.getElementById('trendingTableBody');
-            tableBody.innerHTML = "";
-            data.trending_videos.forEach(video => {
-                let row = `<tr>
-                    <td>${video.title}</td>
-                    <td>${video.channel}</td>
-                    <td>${video.category}</td>
-                    <td>${video.views.toLocaleString()}</td>
-                    <td>${video.likes.toLocaleString()}</td>
-                    <td>${video.comments.toLocaleString()}</td>
-                    <td>${video.engagement_rate.toFixed(2)}</td>
-                </tr>`;
-                tableBody.innerHTML += row;
+            fetch('/api/analyze-trending', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ region_code: regionCode })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert("Error: " + data.error);
+                    return;
+                }
+
+                let tableBody = document.getElementById('trendingTableBody');
+                tableBody.innerHTML = "";
+                data.trending_videos.forEach(video => {
+                    let row = `<tr>
+                        <td>${video.title}</td>
+                        <td>${video.channel}</td>
+                        <td>${video.category}</td>
+                        <td>${video.views.toLocaleString()}</td>
+                        <td>${video.likes.toLocaleString()}</td>
+                        <td>${video.comments.toLocaleString()}</td>
+                        <td>${video.engagement_rate.toFixed(2)}</td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+                });
+
+                updateCharts(data.trending_videos, data.category_distribution);
+            })
+            .catch(error => console.error('Error fetching trending videos:', error));
+        }
+
+        function updateCharts(videos, categoryDistribution) {
+            let labels = videos.map(v => v.title);
+            let views = videos.map(v => v.views);
+            let engagementRates = videos.map(v => v.engagement_rate);
+            let categoryLabels = Object.keys(categoryDistribution);
+            let categoryValues = Object.values(categoryDistribution);
+
+            if (engagementChart) engagementChart.destroy();
+            if (categoryChart) categoryChart.destroy();
+            if (engagementRateChart) engagementRateChart.destroy();
+            if (engagementAreaChart) engagementAreaChart.destroy();
+
+            engagementChart = new Chart(document.getElementById('engagementChart').getContext('2d'), {
+                type: 'bar',
+                data: { labels, datasets: [{ label: 'Views', data: views, backgroundColor: '#dc3545' }] },
+                options: { scales: { y: { beginAtZero: true, ticks: { color: '#e0e0e0' } } }, plugins: { legend: { labels: { color: '#e0e0e0' } } } }
             });
 
-            updateCharts(data.trending_videos, data.category_distribution);
-        })
-        .catch(error => console.error('Error fetching trending videos:', error));
-    }
+            categoryChart = new Chart(document.getElementById('categoryChart').getContext('2d'), {
+                type: 'pie',
+                data: { labels: categoryLabels, datasets: [{ data: categoryValues, backgroundColor: ['#007BFF', '#28a745', '#dc3545', '#ffc107', '#17a2b8'] }] },
+                options: { plugins: { legend: { labels: { color: '#e0e0e0' } } } }
+            });
 
-    function updateCharts(videos, categoryDistribution) {
-        let labels = videos.map(v => v.title);
-        let views = videos.map(v => v.views);
-        let engagementRates = videos.map(v => v.engagement_rate);
-        let categoryLabels = Object.keys(categoryDistribution);
-        let categoryValues = Object.values(categoryDistribution);
+            engagementRateChart = new Chart(document.getElementById('engagementRateChart').getContext('2d'), {
+                type: 'line',
+                data: { labels, datasets: [{ label: 'Engagement Rate (%)', data: engagementRates, borderColor: '#007BFF', backgroundColor: 'rgba(0,123,255,0.2)', fill: true }] },
+                options: { scales: { y: { beginAtZero: true, ticks: { color: '#e0e0e0' } } }, plugins: { legend: { labels: { color: '#e0e0e0' } } } }
+            });
 
-        if (engagementChart) engagementChart.destroy();
-        if (categoryChart) categoryChart.destroy();
-        if (engagementRateChart) engagementRateChart.destroy();
-        if (engagementAreaChart) engagementAreaChart.destroy();
-
-        engagementChart = new Chart(document.getElementById('engagementChart').getContext('2d'), {
-            type: 'bar',
-            data: { labels, datasets: [{ label: 'Views', data: views, backgroundColor: 'red' }] }
-        });
-
-        categoryChart = new Chart(document.getElementById('categoryChart').getContext('2d'), {
-            type: 'pie',
-            data: { labels: categoryLabels, datasets: [{ data: categoryValues, backgroundColor: ['blue', 'green', 'red'] }] }
-        });
-
-        engagementRateChart = new Chart(document.getElementById('engagementRateChart').getContext('2d'), {
-            type: 'line',
-            data: { labels, datasets: [{ label: 'Engagement Rate (%)', data: engagementRates, borderColor: 'blue', backgroundColor: 'rgba(0,123,255,0.2)', fill: true }] }
-        });
-
-        engagementAreaChart = new Chart(document.getElementById('engagementAreaChart').getContext('2d'), {
-            type: 'line',
-            data: { labels, datasets: [{ label: 'Engagement Rate (%)', data: engagementRates, borderColor: 'green', backgroundColor: 'rgba(0,255,0,0.2)', fill: true }] }
-        });
-    }
-
-
-
-    function generateReport() {
-    // Grab the region from the correct element id
-    const selectedRegion = document.getElementById('regionSelect').value;
-    document.getElementById('reportContent').textContent = 'Generating report...';
-    
-    fetch('/api/generate-report', {  
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({ region: selectedRegion })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            engagementAreaChart = new Chart(document.getElementById('engagementAreaChart').getContext('2d'), {
+                type: 'line',
+                data: { labels, datasets: [{ label: 'Engagement Rate (%)', data: engagementRates, borderColor: '#28a745', backgroundColor: 'rgba(40,167,69,0.2)', fill: true }] },
+                options: { scales: { y: { beginAtZero: true, ticks: { color: '#e0e0e0' } } }, plugins: { legend: { labels: { color: '#e0e0e0' } } } }
+            });
         }
-        return response.json();
-    })
-    .then(data => {
-        console.log("Received data:", data);
-        if (data.error) {
-            throw new Error(data.error);
+
+        function generateReport() {
+            const selectedRegion = document.getElementById('regionSelect').value;
+            document.getElementById('reportContent').textContent = 'Generating report...';
+
+            fetch('/api/generate-report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ region: selectedRegion })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                if (data.report) {
+                    document.getElementById('reportContent').textContent = data.report;
+                } else {
+                    throw new Error("No report data received");
+                }
+            })
+            .catch(error => {
+                console.error('Error in report generation:', error);
+                document.getElementById('reportContent').textContent = `Error generating report: ${error.message}`;
+            });
         }
-        if (data.report) {
-            document.getElementById('reportContent').textContent = data.report;
-            console.log("Report displayed successfully");
-        } else {
-            throw new Error("No report data received");
+
+        function downloadReport() {
+            fetch('/api/download-report')
+            .then(response => response.blob())
+            .then(blob => {
+                let link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'Trending_Report.pdf';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            })
+            .catch(error => console.error('Error downloading report:', error));
         }
-    })
-    .catch(error => {
-        console.error('Error in report generation:', error);
-        document.getElementById('reportContent').textContent = `Error generating report: ${error.message}`;
-    });
-    }
 
-
-
-
-
-    function downloadReport() {
-        fetch('/api/download-report')
-        .then(response => response.blob())
-        .then(blob => {
-            let link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'Trending_Report.pdf';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        })
-        .catch(error => console.error('Error downloading report:', error));
-    }
-</script>
-
+        // Initial navigation setup
+        window.addEventListener('load', () => {
+            document.getElementById('trending').style.display = 'block';
+            const navLinks = document.querySelectorAll('.nav-links a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const sectionId = link.getAttribute('href').substring(1);
+                    document.querySelectorAll('.container').forEach(section => {
+                        section.style.display = 'none';
+                    });
+                    document.getElementById(sectionId).style.display = 'block';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            });
+        });
+    </script>
 </body>
 </html>

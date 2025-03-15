@@ -10,6 +10,8 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 import re
 import sqlite3
+from googleapiclient.errors import HttpError
+
 
 
 
@@ -36,8 +38,8 @@ from services.transcription_analysis import TranscriptionAnalyzer
 from services.channel_insights import get_channel_insights
 from database.channel_db import calculate_spike_percentage , get_previous_video_stats, store_spike_data
 from services.sentiment_analysis import analyze_sentiment
-# Translation Service
-from services.translation_service import TranslationService
+from services.emotion_analysis import EmotionAnalyzer
+
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -92,6 +94,9 @@ def transcription_analysis():
 def content_moderation():
     return render_template("content_moderation_agent.html")
 
+@app.route("/video-content-creator")
+def video_creation():
+    return render_template("video_content_creator.html")
 
 
 
@@ -248,15 +253,63 @@ def analyze_video():
         return jsonify({"error": str(e)})
 
 
+
+
 #Analyze Sentiment and Emotions 
+# Initialize the emotion analyzer
+try:
+    emotion_analyzer = EmotionAnalyzer()
+except Exception as e:
+    logging.error(f"EmotionAnalyzer init failed: {str(e)}")
+    raise
+
+
+
 @app.route('/api/analyze-sentiment', methods=['POST'])
 def analyze_sentiment_route():
     return analyze_sentiment()
 
-# @app.route('/api/analyze-emotions', methods=['POST'])
-# def analyze_emotions_route():
-#     return analyze_emotions()
+@app.route('/api/analyze-emotions', methods=['POST'])
+def analyze_emotions():
+    logging.debug("Emotions route called")
+    try:
+        data = request.get_json()
+        if not data or 'channel_name' not in data or 'video_title' not in data:
+            return jsonify({'error': 'Missing channel_name or video_title'}), 400
 
+        channel_name = data['channel_name'].strip()
+        video_title = data['video_title'].strip()
+        max_results = data.get('max_results', 100)
+
+        if not channel_name or not video_title:
+            return jsonify({'error': 'Please provide both Channel Name and Video Title'}), 400
+
+        from services.sentiment_analysis import search_video  # Absolute import
+        video_id = search_video(channel_name, video_title)
+        logging.debug(f"Video ID: {video_id}")
+
+        if not video_id:
+            return jsonify({'error': f'No video found for "{video_title}" in "{channel_name}"'}), 404
+
+        results = emotion_analyzer.analyze_video_emotions(video_id, max_results)
+        logging.debug(f"Emotion results: {results}")
+
+        response = {
+            'status': 'success',
+            'video_id': results['video_id'],
+            'emotion_summary': results['emotion_summary'],
+            'comments_analysis': [
+                {'text': comment, 'emotion': emotion} for comment, emotion in results['predictions']
+            ]
+        }
+        return jsonify(response), 200
+
+    except HttpError as e:
+        logging.error(f"YouTube API error: {str(e)}")
+        return jsonify({'error': f'YouTube API error: {str(e)}'}), 500
+    except Exception as e:
+        logging.error(f"Emotion analysis error: {str(e)}")
+        return jsonify({'error': f'Error analyzing emotions: {str(e)}'}), 500
 
 
 # Trending Videos Analysis
@@ -379,6 +432,8 @@ def generate_report():
         import traceback
         traceback.print_exc()  # Print full stack trace
         return jsonify({"error": str(e)}), 500
+    
+
 
 
 
@@ -568,6 +623,53 @@ def analyze_transcription():
     except Exception as e:
         return jsonify({'error': f"An unexpected error occurred: {str(e)}"}), 500
     
+
+from services.video_content import VideoContentService
+
+video_content_service = VideoContentService()
+
+@app.route("/api/generate-titles", methods=["POST"])
+def generate_titles():
+    data = request.json
+    video_description = data.get("video_description")
+    num_titles = data.get("num_titles", 5)
+    titles = video_content_service.generate_titles(video_description, num_titles)
+    return jsonify({"titles": titles})
+
+
+
+from groq import GroqError
+@app.route("/api/generate-script", methods=["POST"])
+def generate_script():
+    try:
+        data = request.json
+        content_idea = data.get("content_idea")
+        video_length = data.get("video_length", 5)
+        tone = data.get("tone", "casual")
+
+        if not content_idea:
+            return jsonify({"message": "Content idea is required."}), 400
+        if not isinstance(video_length, (int, float)) or video_length < 1 or video_length > 30:
+            return jsonify({"message": "Video length must be between 1 and 30 minutes."}), 400
+
+        script = video_content_service.generate_script(content_idea, video_length, tone)
+        return jsonify({"script": script})
+    except GroqError as e:
+        return jsonify({"message": f"Groq API error: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"message": f"Server error: {str(e)}"}), 500
+    
+@app.route("/api/suggest-keywords", methods=["POST"])
+def suggest_keywords():
+    try:
+        data = request.json
+        description = data.get("description")
+        keywords = video_content_service.suggest_keywords(description)
+        if not keywords and not description:
+            return jsonify({"message": "Description is required."}), 400
+        return jsonify({"keywords": keywords})
+    except Exception as e:
+        return jsonify({"message": f"Error: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

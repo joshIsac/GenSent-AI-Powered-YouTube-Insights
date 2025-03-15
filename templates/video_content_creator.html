@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Video Composer - GenSent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/boxicons@2.0.7/css/boxicons.min.css" rel="stylesheet" />
+  <style>
+    /* Custom Tailwind CSS styles */
+    .bg-dark-gradient {
+      background: linear-gradient(135deg, #0a0e17 0%, #1a2a44 100%);
+    }
+    .bg-dark-overlay {
+      background: rgba(10, 14, 23, 0.9);
+    }
+    .text-yellow {
+      color: #ffd700;
+    }
+    .btn-explore {
+      background: linear-gradient(90deg, #ffd700 0%, #e6c200 100%);
+      color: #1a2a44;
+      transition: all 0.3s ease;
+    }
+    .btn-explore:hover {
+      background: linear-gradient(90deg, #e6c200 0%, #ffd700 100%);
+      transform: scale(1.05);
+    }
+    .output-box {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    .navbar {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+    }
+    .nav-link {
+      transition: color 0.3s ease;
+    }
+    .nav-link:hover {
+      color: #ffd700;
+    }
+
+    /* Animated Background - Starry Night Effect */
+    .animated-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: linear-gradient(135deg, #0a0e17 0%, #1a2a44 100%);
+      overflow: hidden;
+    }
+    .star {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 50%;
+      animation: twinkle 5s infinite ease-in-out;
+    }
+    .nebula {
+      position: absolute;
+      background: radial-gradient(circle, rgba(255, 215, 0, 0.1) 0%, rgba(10, 14, 23, 0) 70%);
+      border-radius: 50%;
+      animation: pulse 15s infinite ease-in-out;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.2; transform: scale(0.5); }
+      50% { opacity: 0.8; transform: scale(1); }
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.1; }
+      50% { transform: scale(1.2); opacity: 0.3; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-dark-gradient text-white font-sans relative">
+  <!-- Animated Background -->
+  <div class="animated-bg">
+    <div class="star w-1 h-1 top-10 left-10" style="animation-delay: -1s;"></div>
+    <div class="star w-2 h-2 top-20 left-30" style="animation-delay: -2s;"></div>
+    <div class="star w-1 h-1 top-40 left-50" style="animation-delay: -3s;"></div>
+    <div class="star w-2 h-2 top-60 left-70" style="animation-delay: -4s;"></div>
+    <div class="star w-1 h-1 top-80 left-90" style="animation-delay: -5s;"></div>
+    <div class="nebula w-64 h-64 top-1/4 left-1/4" style="animation-delay: -2s;"></div>
+    <div class="nebula w-96 h-96 top-3/4 left-3/4" style="animation-delay: -8s;"></div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar bg-dark-overlay fixed top-0 left-0 w-full z-50 py-4">
+    <div class="container mx-auto px-4 flex justify-between items-center">
+      <a href="/" class="flex items-center text-2xl font-bold">
+        <i class='bx bxl-youtube text-red-600 mr-2'></i>
+        GenSent Analytics
+      </a>
+      <div class="hidden md:flex items-center space-x-6">
+        <a href="/" class="nav-link text-lg" aria-label="Go to Home page">Home</a>
+        <a href="#smart-video-composer" class="nav-link text-lg" aria-label="About Smart Video Composer">Smart Video Composer</a>
+      </div>
+      <button id="mobile-menu-btn" class="md:hidden text-white focus:outline-none">
+        <i class='bx bx-menu text-2xl'></i>
+      </button>
+    </div>
+    <div id="mobile-menu" class="hidden md:hidden bg-dark-overlay w-full absolute top-16 left-0 py-4 px-4">
+      <a href="/" class="block nav-link text-lg py-2" aria-label="Go to Home page">Home</a>
+      <a href="#smart-video-composer" class="block nav-link text-lg py-2" aria-label="About Smart Video Composer">Smart Video Composer</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container mx-auto px-4 py-24" id="smart-video-composer">
+    <h2 class="text-4xl md:text-5xl font-bold text-center mb-10">Smart Video Composer</h2>
+
+    <!-- Title Generator Section -->
+    <div class="mb-12">
+      <div class="max-w-3xl mx-auto">
+        <h3 class="text-2xl md:text-3xl font-semibold mb-4">Title Composer</h3>
+        <p class="text-lg mb-6">Enter your video description to generate SEO-friendly titles.</p>
+        <form id="title-form" class="space-y-4">
+          <div>
+            <label for="video-description" class="block text-sm font-medium mb-2">Video Description</label>
+            <textarea
+              id="video-description"
+              class="w-full p-4 bg-gray-900 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              rows="3"
+              placeholder="e.g., A tutorial on baking chocolate chip cookies"
+              required
+            ></textarea>
+          </div>
+          <div>
+            <label for="num-titles" class="block text-sm font-medium mb-2">Number of Titles (1-20)</label>
+            <input
+              type="number"
+              id="num-titles"
+              class="w-full p-4 bg-gray-900 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              min="1"
+              max="20"
+              value="10"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            class="btn-explore px-6 py-3 rounded-full font-semibold flex items-center justify-center mx-auto"
+          >
+            <i class='bx bx-rocket mr-2'></i> Generate Titles
+          </button>
+          <button
+            type="button"
+            id="suggest-keywords"
+            class="btn-explore px-6 py-3 rounded-full font-semibold flex items-center justify-center mx-auto mt-4"
+          >
+            <i class='bx bx-search mr-2'></i> Suggest Keywords
+          </button>
+        </form>
+        <div id="title-progress" class="hidden w-full bg-gray-700 rounded-full h-2 mt-4">
+          <div class="bg-yellow-500 h-2 rounded-full" style="width: 0%; transition: width 2s ease;"></div>
+        </div>
+        <div id="title-loading" class="hidden text-center mt-4">
+          <i class='bx bx-loader-alt animate-spin text-2xl text-yellow-500'></i>
+          <p class="text-sm mt-2">Generating titles...</p>
+        </div>
+        <div id="title-output" class="output-box hidden">
+          <h5 class="text-xl font-semibold mb-4">Generated Titles</h5>
+          <ul id="title-list" class="list-disc pl-5 space-y-2"></ul>
+        </div>
+        <div id="keyword-output" class="output-box hidden">
+          <h5 class="text-xl font-semibold mb-4">Suggested Keywords</h5>
+          <ul id="keyword-list" class="list-disc pl-5 space-y-2"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Script Generator Section -->
+    <div>
+      <div class="max-w-3xl mx-auto">
+        <h3 class="text-2xl md:text-3xl font-semibold mb-4">Script Composer</h3>
+        <p class="text-lg mb-6">Enter your content idea to generate a detailed video script.</p>
+        <form id="script-form" class="space-y-4">
+          <div>
+            <label for="content-idea" class="block text-sm font-medium mb-2">Content Idea</label>
+            <textarea
+              id="content-idea"
+              class="w-full p-4 bg-gray-900 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              rows="3"
+              placeholder="e.g., A 5-minute video on the benefits of yoga for stress relief"
+              required
+            ></textarea>
+          </div>
+          <div>
+            <label for="video-length" class="block text-sm font-medium mb-2">Video Length (minutes)</label>
+            <input
+              type="number"
+              id="video-length"
+              class="w-full p-4 bg-gray-900 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              min="1"
+              max="30"
+              value="5"
+              required
+            />
+          </div>
+          <div>
+            <label for="tone" class="block text-sm font-medium mb-2">Tone</label>
+            <select
+              id="tone"
+              class="w-full p-4 bg-gray-900 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            >
+              <option value="casual">Casual</option>
+              <option value="professional">Professional</option>
+              <option value="energetic">Energetic</option>
+            </select>
+          </div>
+          <button
+            type="submit"
+            class="btn-explore px-6 py-3 rounded-full font-semibold flex items-center justify-center mx-auto"
+          >
+            <i class='bx bx-file mr-2'></i> Generate Script
+          </button>
+        </form>
+        <div id="script-progress" class="hidden w-full bg-gray-700 rounded-full h-2 mt-4">
+          <div class="bg-yellow-500 h-2 rounded-full" style="width: 0%; transition: width 2s ease;"></div>
+        </div>
+        <div id="script-loading" class="hidden text-center mt-4">
+          <i class='bx bx-loader-alt animate-spin text-2xl text-yellow-500'></i>
+          <p class="text-sm mt-2">Composing script...</p>
+        </div>
+        <div id="script-output" class="output-box hidden">
+          <h5 class="text-xl font-semibold mb-4">Generated Script</h5>
+          <div id="script-preview" class="text-sm whitespace-pre-wrap mb-4 bg-gray-800 p-4 rounded-lg"></div>
+          <textarea
+            id="script-text"
+            class="w-full p-4 bg-gray-900 text-white rounded-lg min-h-[200px] focus:outline-none focus:ring-2 focus:ring-yellow-500"
+          ></textarea>
+          <div class="flex space-x-2 mt-2 justify-center">
+            <button id="undo-script" class="text-yellow-500 hover:text-yellow-400"><i class='bx bx-undo'></i> Undo</button>
+            <button id="redo-script" class="text-yellow-500 hover:text-yellow-400"><i class='bx bx-redo'></i> Redo</button>
+          </div>
+          <div class="flex space-x-4 mt-4 justify-center">
+            <button
+              id="save-script"
+              class="btn-explore px-6 py-3 rounded-full font-semibold flex items-center"
+            >
+              <i class='bx bx-save mr-2'></i> Save Changes
+            </button>
+            <button
+              id="download-script"
+              class="btn-explore px-6 py-3 rounded-full font-semibold flex items-center"
+            >
+              <i class='bx bx-download mr-2'></i> Download Script
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Toggle Mobile Menu
+    document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+      document.getElementById('mobile-menu').classList.toggle('hidden');
+    });
+
+    // Smooth Scroll for Navigation Links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        document.querySelector(this.getAttribute('href')).scrollIntoView({
+          behavior: 'smooth'
+        });
+      });
+    });
+
+    // Interactive Background Stars
+    document.addEventListener('mousemove', (e) => {
+      let star = document.createElement('div');
+      star.className = 'star w-1 h-1';
+      star.style.left = `${e.clientX}px`;
+      star.style.top = `${e.clientY}px`;
+      star.style.animationDuration = '2s';
+      document.querySelector('.animated-bg').appendChild(star);
+      setTimeout(() => star.remove(), 2000);
+    });
+
+    // Title Generator Form Submission
+    document.getElementById('title-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      let description = document.getElementById('video-description').value;
+      let numTitles = parseInt(document.getElementById('num-titles').value, 10);
+
+      if (!description) {
+        alert('Video description is required.');
+        return;
+      }
+      if (isNaN(numTitles) || numTitles < 1 || numTitles > 20) {
+        alert('Number of titles must be between 1 and 20.');
+        return;
+      }
+
+      let progress = document.getElementById('title-progress');
+      progress.classList.remove('hidden');
+      let progressBar = progress.querySelector('div');
+      progressBar.style.width = '0%';
+      let interval = setInterval(() => {
+        let width = parseInt(progressBar.style.width) + 10;
+        progressBar.style.width = `${Math.min(width, 100)}%`;
+      }, 200);
+
+      document.getElementById('title-loading').classList.remove('hidden');
+      try {
+        let response = await fetch('/api/generate-titles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ video_description: description, num_titles: numTitles })
+        });
+        if (!response.ok) {
+          let errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to generate titles.');
+        }
+        let data = await response.json();
+        let titleList = document.getElementById('title-list');
+        titleList.innerHTML = '';
+        data.titles.forEach(title => {
+          let li = document.createElement('li');
+          li.className = 'flex justify-between items-center';
+          li.innerHTML = `
+            <span>${title}</span>
+            <button class="copy-btn text-yellow-500 hover:text-yellow-400 text-sm ml-2" data-text="${title}">
+              <i class='bx bx-copy'></i> Copy
+            </button>
+          `;
+          titleList.appendChild(li);
+        });
+        document.getElementById('title-output').classList.remove('hidden');
+
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            navigator.clipboard.writeText(btn.dataset.text).then(() => {
+              btn.innerHTML = "<i class='bx bx-check'></i> Copied!";
+              setTimeout(() => btn.innerHTML = "<i class='bx bx-copy'></i> Copy", 2000);
+            });
+          });
+        });
+      } catch (error) {
+        console.error('Error generating titles:', error);
+        alert(error.message || 'Failed to generate titles. Please try again later.');
+      } finally {
+        clearInterval(interval);
+        progressBar.style.width = '100%';
+        setTimeout(() => progress.classList.add('hidden'), 500);
+        document.getElementById('title-loading').classList.add('hidden');
+      }
+    });
+
+    // Keyword Suggestions
+    document.getElementById('suggest-keywords').addEventListener('click', async () => {
+      let description = document.getElementById('video-description').value;
+      if (!description) {
+        alert('Video description is required for keyword suggestions.');
+        return;
+      }
+      try {
+        let response = await fetch('/api/suggest-keywords', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ description })
+        });
+        if (!response.ok) throw new Error('Failed to fetch keywords.');
+        let data = await response.json();
+        let keywordList = document.getElementById('keyword-list');
+        keywordList.innerHTML = '';
+        data.keywords.forEach(keyword => {
+          let li = document.createElement('li');
+          li.textContent = keyword;
+          keywordList.appendChild(li);
+        });
+        document.getElementById('keyword-output').classList.remove('hidden');
+      } catch (error) {
+        console.error('Error fetching keywords:', error);
+        alert('Failed to suggest keywords. Please try again later.');
+      }
+    });
+
+    // Script Generator Form Submission
+    document.getElementById('script-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      let idea = document.getElementById('content-idea').value;
+      let length = parseInt(document.getElementById('video-length').value, 10);
+      let tone = document.getElementById('tone').value;
+
+      if (!idea) {
+        alert('Content idea is required.');
+        return;
+      }
+      if (isNaN(length) || length < 1 || length > 30) {
+        alert('Video length must be between 1 and 30 minutes.');
+        return;
+      }
+
+      let progress = document.getElementById('script-progress');
+      progress.classList.remove('hidden');
+      let progressBar = progress.querySelector('div');
+      progressBar.style.width = '0%';
+      let interval = setInterval(() => {
+        let width = parseInt(progressBar.style.width) + 10;
+        progressBar.style.width = `${Math.min(width, 100)}%`;
+      }, 200);
+
+      document.getElementById('script-loading').classList.remove('hidden');
+      try {
+        let response = await fetch('/api/generate-script', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content_idea: idea, video_length: length, tone: tone })
+        });
+        if (!response.ok) {
+          let errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to generate script.');
+        }
+        let data = await response.json();
+        let scriptText = data.script;
+        document.getElementById('script-text').value = scriptText;
+
+        // Simple timestamp parsing (assuming script has sections)
+        let sections = scriptText.split('\n\n');
+        let totalSeconds = length * 60;
+        let sectionDuration = totalSeconds / sections.length;
+        let preview = '';
+        sections.forEach((section, i) => {
+          let startSeconds = Math.floor(i * sectionDuration);
+          let minutes = Math.floor(startSeconds / 60);
+          let seconds = startSeconds % 60;
+          preview += `[${minutes}:${seconds.toString().padStart(2, '0')}] ${section}\n\n`;
+        });
+        document.getElementById('script-preview').textContent = preview;
+
+        document.getElementById('script-output').classList.remove('hidden');
+      } catch (error) {
+        console.error('Error generating script:', error);
+        alert(error.message || 'Failed to generate script. Please try again later.');
+      } finally {
+        clearInterval(interval);
+        progressBar.style.width = '100%';
+        setTimeout(() => progress.classList.add('hidden'), 500);
+        document.getElementById('script-loading').classList.add('hidden');
+      }
+    });
+
+    // Undo/Redo for Script Edits
+    let scriptHistory = [];
+    let historyIndex = -1;
+
+    function updateScriptHistory(script) {
+      if (historyIndex < scriptHistory.length - 1) scriptHistory = scriptHistory.slice(0, historyIndex + 1);
+      scriptHistory.push(script);
+      historyIndex++;
+    }
+
+    document.getElementById('script-text').addEventListener('input', (e) => {
+      updateScriptHistory(e.target.value);
+    });
+
+    document.getElementById('undo-script').addEventListener('click', () => {
+      if (historyIndex > 0) {
+        historyIndex--;
+        document.getElementById('script-text').value = scriptHistory[historyIndex];
+      }
+    });
+
+    document.getElementById('redo-script').addEventListener('click', () => {
+      if (historyIndex < scriptHistory.length - 1) {
+        historyIndex++;
+        document.getElementById('script-text').value = scriptHistory[historyIndex];
+      }
+    });
+
+    // Save Script Changes
+    document.getElementById('save-script').addEventListener('click', () => {
+      let script = document.getElementById('script-text').value;
+      localStorage.setItem('savedScript', script);
+      updateScriptHistory(script);
+      alert('Script changes saved!');
+    });
+
+    // Download Script Button
+    document.getElementById('download-script').addEventListener('click', () => {
+      let script = document.getElementById('script-text').value;
+      let blob = new Blob([script], { type: 'text/plain' });
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement('a');
+      a.href = url;
+      a.download = 'video-script.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Script Generator Form Submission with History Initialization
+document.getElementById('script-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  let idea = document.getElementById('content-idea').value;
+  let length = parseInt(document.getElementById('video-length').value, 10);
+  let tone = document.getElementById('tone').value;
+
+  if (!idea) {
+    alert('Content idea is required.');
+    return;
+  }
+  if (isNaN(length) || length < 1 || length > 30) {
+    alert('Video length must be between 1 and 30 minutes.');
+    return;
+  }
+
+  let progress = document.getElementById('script-progress');
+  progress.classList.remove('hidden');
+  let progressBar = progress.querySelector('div');
+  progressBar.style.width = '0%';
+  let interval = setInterval(() => {
+    let width = parseInt(progressBar.style.width) + 10;
+    progressBar.style.width = `${Math.min(width, 100)}%`;
+  }, 200);
+
+  document.getElementById('script-loading').classList.remove('hidden');
+  try {
+    let response = await fetch('/api/generate-script', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content_idea: idea, video_length: length, tone: tone })
+    });
+    if (!response.ok) {
+      let errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to generate script.');
+    }
+    // Success block with history initialization
+    let data = await response.json();
+    let scriptText = data.script;
+    document.getElementById('script-text').value = scriptText;
+    scriptHistory = [scriptText]; // Initialize history with the new script
+    historyIndex = 0; // Reset history index to start
+
+    // Generate timestamped preview
+    let sections = scriptText.split('\n\n');
+    let totalSeconds = length * 60;
+    let sectionDuration = totalSeconds / sections.length;
+    let preview = '';
+    sections.forEach((section, i) => {
+      let startSeconds = Math.floor(i * sectionDuration);
+      let minutes = Math.floor(startSeconds / 60);
+      let seconds = startSeconds % 60;
+      preview += `[${minutes}:${seconds.toString().padStart(2, '0')}] ${section}\n\n`;
+    });
+    document.getElementById('script-preview').textContent = preview;
+
+    document.getElementById('script-output').classList.remove('hidden');
+  } catch (error) {
+    console.error('Error generating script:', error);
+    alert(error.message || 'Failed to generate script. Please try again later.');
+  } finally {
+    clearInterval(interval);
+    progressBar.style.width = '100%';
+    setTimeout(() => progress.classList.add('hidden'), 500);
+    document.getElementById('script-loading').classList.add('hidden');
+  }
+});
+
+  </script>
+</body>
+</html>
