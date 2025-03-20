@@ -1,4 +1,3 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -52,9 +51,12 @@
     .hero-section h1 {
       font-size: 3rem;
       font-weight: 700;
+      animation: fadeInUp 1s ease-out;
     }
     .hero-section p {
       font-size: 1.2rem;
+      animation: fadeInUp 1s ease-out 0.3s forwards;
+      opacity: 0;
     }
 
     /* Dashboard/Features Container */
@@ -79,6 +81,10 @@
       font-size: 50px;
       margin-bottom: 15px;
       color: #ffc107;
+      transition: transform 0.3s ease;
+    }
+    .feature-card:hover .feature-icon {
+      transform: scale(1.2) rotate(10deg);
     }
     .card-title {
       font-weight: 600;
@@ -122,6 +128,17 @@
       padding: 20px 0;
       font-size: 0.9rem;
     }
+
+    /* Back-to-Top Button */
+    #back-to-top {
+      z-index: 1000;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
@@ -159,7 +176,10 @@
   <!-- Features Section -->
   <section id="features" class="dashboard-container container">
     <h2 class="text-center mb-4">Our Features</h2>
-    <div class="row g-4">
+    <div class="mb-4">
+      <input type="text" id="feature-search" class="form-control w-50 mx-auto" placeholder="Search features..." />
+    </div>
+    <div class="row g-4" id="feature-list">
       <!-- Channel Insights -->
       <div class="col-md-6 col-lg-4">
         <div class="card feature-card text-center">
@@ -199,7 +219,7 @@
           <div class="card-body">
             <i class='bx bx-trending-up feature-icon'></i>
             <h5 class="card-title">Trending Videos Analysis</h5>
-            <p class="card-text">Discover trending videos from various regions,Analyze trending topics and insights.</p>
+            <p class="card-text">Discover trending videos from various regions, Analyze trending topics and insights.</p>
             <a href="/trending-videos" class="btn btn-explore">Explore</a>
           </div>
         </div>
@@ -215,44 +235,40 @@
           </div>
         </div>
       </div>
-    
-          <!-- Speech & Transcript Analysis --> 
-          <div class="col-md-6 col-lg-4">
-            <div class="card feature-card text-center">
-              <div class="card-body">
-                <i class='bx bx-microphone feature-icon'></i>
-                <h5 class="card-title">Speech & Transcript Analysis</h5>
-                <p class="card-text">Extract insights from video speech content.</p>
-                <a href="/transcription-analysis" class="btn btn-explore">Analyze</a>
-              </div>
-            </div>
+      <!-- Speech & Transcript Analysis --> 
+      <div class="col-md-6 col-lg-4">
+        <div class="card feature-card text-center">
+          <div class="card-body">
+            <i class='bx bx-microphone feature-icon'></i>
+            <h5 class="card-title">Speech & Transcript Analysis</h5>
+            <p class="card-text">Extract insights from video speech content.</p>
+            <a href="/transcription-analysis" class="btn btn-explore">Analyze</a>
           </div>
-
-          <!-- AI Video Content Creator -->
-<div class="col-md-6 col-lg-4">
-  <div class="card feature-card text-center">
-    <div class="card-body">
-      <i class='bx bx-rocket feature-icon'></i>
-      <h5 class="card-title">AI Video Content Creator</h5>
-      <p class="card-text">Generate SEO-friendly titles and engaging video scripts with AI, tailored to your content ideas.</p>
-      <a href="/video-content-creator" class="btn btn-explore">Create</a>
-    </div>
-  </div>
-</div>
-
-
-          <!-- Multi-language Translation -->
-          <div class="col-md-6 col-lg-4">
-            <div class="card feature-card text-center">
-              <div class="card-body">
-                <i class='bx bx-globe feature-icon'></i>
-                <h5 class="card-title">Multi-language Translation</h5>
-                <p class="card-text">Translate comments & captions for global reach.</p>
-                <a href="/translation" class="btn btn-explore">Translate</a>
-              </div>
-            </div>
+        </div>
+      </div>
+      <!-- AI Video Content Creator -->
+      <div class="col-md-6 col-lg-4">
+        <div class="card feature-card text-center">
+          <div class="card-body">
+            <i class='bx bx-rocket feature-icon'></i>
+            <h5 class="card-title">AI Video Content Creator</h5>
+            <p class="card-text">Generate SEO-friendly titles and engaging video scripts with AI.</p>
+            <a href="/video-content-creator" class="btn btn-explore">Create</a>
           </div>
-          
+        </div>
+      </div>
+      <!-- Multi-language Translation
+      <div class="col-md-6 col-lg-4">
+        <div class="card feature-card text-center">
+          <div class="card-body">
+            <i class='bx bx-globe feature-icon'></i>
+            <h5 class="card-title">Multi-language Translation</h5>
+            <p class="card-text">Translate comments & captions for global reach.</p>
+            <a href="/translation" class="btn btn-explore">Translate</a>
+          </div>
+        </div>
+      </div>
+    -->
     </div>
   </section>
 
@@ -278,6 +294,14 @@
           Have questions or feedback? Reach out to us at 
           <a href="mailto:support@gensent.com" class="text-decoration-underline text-light">support@gensent.com</a>.
         </p>
+        <!--
+        <form class="mt-4" action="/subscribe" method="POST">
+          <div class="input-group w-50 mx-auto">
+            <input type="email" class="form-control" placeholder="Enter your email for updates" name="email" required>
+            <button class="btn btn-explore" type="submit">Subscribe</button>
+          </div>
+        </form>
+      -->
       </div>
     </div>
   </section>
@@ -285,13 +309,35 @@
   <!-- Footer -->
   <footer class="footer text-center">
     <div class="container">
-      <p class="mb-0">YouTube Analytics Platform © 2024</p>
+      <p class="mb-0">YouTube Analytics Platform © 2025</p>
     </div>
   </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Back-to-Top Button -->
+  <button id="back-to-top" class="btn btn-explore position-fixed bottom-0 end-0 m-3" style="display: none;">
+    <i class='bx bx-chevron-up'></i>
+  </button>
 
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Feature Search
+    document.getElementById('feature-search').addEventListener('input', (e) => {
+      let query = e.target.value.toLowerCase();
+      document.querySelectorAll('.feature-card').forEach(card => {
+        let title = card.querySelector('.card-title').textContent.toLowerCase();
+        let text = card.querySelector('.card-text').textContent.toLowerCase();
+        card.style.display = (title.includes(query) || text.includes(query)) ? 'block' : 'none';
+      });
+    });
 
-
+    // Back-to-Top
+    let backToTop = document.getElementById('back-to-top');
+    window.addEventListener('scroll', () => {
+      backToTop.style.display = window.scrollY > 300 ? 'block' : 'none';
+    });
+    backToTop.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  </script>
 </body>
 </html>

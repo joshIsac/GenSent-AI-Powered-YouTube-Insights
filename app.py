@@ -624,6 +624,8 @@ def analyze_transcription():
         return jsonify({'error': f"An unexpected error occurred: {str(e)}"}), 500
     
 
+
+
 from services.video_content import VideoContentService
 
 video_content_service = VideoContentService()
