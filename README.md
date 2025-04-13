@@ -12,10 +12,10 @@ GenSent offers a suite of powerful features:
 - **Sentiment Analysis**: Evaluate audience sentiment through AI-powered analysis of comments.
 - **Video Analytics**: Dive deep into video performance metrics like views, likes, and engagement rates.
 - **Trending Videos Analysis**: Discover trending videos by region and uncover insights into popular topics.
-- **Personalized Recommendations**: Receive AI-driven video suggestions tailored to your interests or channel.
+- **Personalized Recommendations Chatbot**: Receive AI-driven video suggestions tailored to your interests or channel through a User prompt and the clear chatbot response giving suggestions.
 - **Speech & Transcript Analysis**: Extract insights from video transcripts, such as key topics or themes.
-- **AI Video Content Creator**: Generate SEO-friendly titles and engaging video scripts using AI.
-- **Thumbnail Archive**: View a visual history of all thumbnails used by a channel, with hover-over stats for views and likes to track visual performance.
+- **AI Video title and Script generator**: Generate SEO-friendly titles and engaging video scripts using AI.
+
 
 ## Tech Stack
 
