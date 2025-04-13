@@ -1,5 +1,4 @@
 import random
-import difflib
 import string
 from services.youtube_analysis import (
     search_channel,
@@ -10,7 +9,7 @@ from services.youtube_analysis import (
 
 class YouTubeChatbot:
     def __init__(self, model):
-        self.model = model  # AI Model for text generation (if needed)
+        self.model = model  # AI Model for text generation and intent classification
         self.genre_specific_tips = {
             "gaming": [
                 "🎮 Cover new game releases with in-depth reviews.",
@@ -30,59 +29,21 @@ class YouTubeChatbot:
                 "🎯 Share productivity hacks for students.",
                 "💭 Make explainer videos on trending academic topics."
             ],
-            # Add more genres as needed
         }
 
     def preprocess_input(self, user_input):
-        """Cleans and preprocesses user input for better intent matching."""
+        """Cleans and preprocesses user input."""
         user_input = user_input.lower().translate(str.maketrans('', '', string.punctuation))
         return ' '.join(user_input.split())
 
     def generate_response(self, user_input, channel_name=None, genre=None, tone='neutral'):
-        """Processes user input with improved intent detection."""
+        """Processes user input with intent detection using the language model."""
         cleaned_input = self.preprocess_input(user_input)
 
-        # Expanded intents with more variations
-        intents = {
-            "channel_insights": [
-                "how is my channel doing", "channel insights", "performance analysis",
-                "how's my channel performing", "give me channel stats", "what's my subscriber count"
-            ],
-            "video_analysis": [
-                "analyze recent videos", "video insights", "engagement metrics",
-                "how are my videos doing", "video performance"
-            ],
-            "content_ideas": [
-                "what videos should i make", "content ideas", "next video suggestions",
-                "suggest video topics", "what should i make next", "ideas for my channel"
-            ],
-            "sentiment_analysis": [
-                "analyze comments", "viewer sentiment", "audience reaction",
-                "what do viewers think", "comment analysis"
-            ]
-        }
+        # Use the model's intent classification
+        detected_intent = self.model.classify_intent(cleaned_input)
 
-        # Detect intent using fuzzy matching
-        detected_intent = None
-        for intent, phrases in intents.items():
-            if any(difflib.get_close_matches(cleaned_input, [self.preprocess_input(p) for p in phrases], cutoff=0.6)):
-                detected_intent = intent
-                break
-
-        # Fallback to keyword matching if fuzzy matching fails
-        if not detected_intent:
-            keywords = {
-                "channel_insights": ["channel", "subscriber", "growth", "stats"],
-                "video_analysis": ["video", "views", "likes", "comments", "engagement"],
-                "content_ideas": ["ideas", "topics", "suggestions", "make", "post"],
-                "sentiment_analysis": ["comments", "sentiment", "audience", "reaction"]
-            }
-            for intent, kw_list in keywords.items():
-                if any(kw in cleaned_input for kw in kw_list):
-                    detected_intent = intent
-                    break
-
-        # Call the appropriate method based on detected intent
+        # Map intents to specific response methods
         if detected_intent == "channel_insights":
             return self.get_channel_insights(channel_name, tone)
         elif detected_intent == "video_analysis":
@@ -91,8 +52,9 @@ class YouTubeChatbot:
             return self.suggest_content_ideas(channel_name, genre, tone)
         elif detected_intent == "sentiment_analysis":
             return self.analyze_comment_sentiment(channel_name, tone)
-        
-        return self.default_response(genre, tone)
+        else:
+            # Instead of fallback, use Groq to generate a contextual response
+            return self.model.generate_fallback_response(cleaned_input, channel_name, genre, tone)
 
     def get_channel_insights(self, channel_name, tone='neutral'):
         """Fetches enhanced channel statistics."""
@@ -102,7 +64,6 @@ class YouTubeChatbot:
         try:
             channel_id = search_channel(channel_name)
             subscriber_count, title = get_channel_data(channel_id)
-            # Note: Additional metrics like total_views and video_count require new functions
             response = (
                 f"📊 **{title}** Insights:\n"
                 f"• Subscribers: {subscriber_count:,}\n"
@@ -135,7 +96,6 @@ class YouTubeChatbot:
             avg_likes = total_likes / len(videos)
             avg_comments = total_comments / len(videos)
 
-            # Basic trend analysis
             trend_message = (
                 "• View Trend: Not enough data" if len(videos) <= 1 else
                 f"• View Trend: {'upward 📈' if videos[0]['view_count'] > videos[-1]['view_count'] else 'downward 📉'}"
@@ -225,23 +185,3 @@ class YouTubeChatbot:
             return "🎬 **Content Ideas**:\n" + "\n".join(random.sample(suggestions, 3))
         except Exception as e:
             return f"⚠️ Error suggesting ideas: {str(e)}. Please check the channel name."
-
-    def default_response(self, genre=None, tone='neutral'):
-        """Provides a helpful fallback response."""
-        base_response = (
-            "🤖 I'm here to help! You can ask me about:\n"
-            "• 📊 Channel insights\n"
-            "• 🎥 Recent video analysis\n"
-            "• 🧠 Content ideas\n"
-            "• 🗣 Audience sentiment\n"
-        )
-
-        if genre and genre.lower() in self.genre_specific_tips:
-            base_response += f"\n\nI specialize in **{genre}** content—ask me anything!"
-
-        if tone == 'positive':
-            base_response += "\n🎉 Keep up the great work! 🚀"
-        elif tone == 'negative':
-            base_response += "\n⚠️ Don’t get discouraged—there’s always room to grow!"
-
-        return base_response

@@ -5,16 +5,26 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from googleapiclient.errors import HttpError
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import nltk
+import torch
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 
-nltk.download('vader_lexicon')
-nltk.download('punkt')
-nltk.download('stopwords')
+nltk.download('vader_lexicon', quiet=True)
+nltk.download('punkt', quiet=True)
+nltk.download('stopwords', quiet=True)
+
 
 sia = SentimentIntensityAnalyzer()
+
+# Initialize BERT for 5-class sentiment (pre-trained, not fine-tuned)
+tokenizer = AutoTokenizer.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")
+model = AutoModelForSequenceClassification.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model.to(device)
+model.eval()
 
 def search_video(channel_name, video_title):
     """Search for a YouTube video using channel name and video title."""
@@ -57,6 +67,17 @@ def get_latest_video_by_channel(channel_name):
     return videos_response["items"][0]["id"]["videoId"]
 
 
+def predict_bert_sentiment(text):
+    """Predict 5-class sentiment using pre-trained BERT model."""
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=128)
+    inputs = {k: v.to(device) for k, v in inputs.items()}
+    with torch.no_grad():
+        outputs = model(**inputs)
+    logits = outputs.logits
+    pred = torch.argmax(logits, dim=1).cpu().item()
+    sentiment_map = {0: "very negative", 1: "negative", 2: "neutral", 3: "positive", 4: "very positive"}
+    return sentiment_map[pred], pred
+
 def analyze_sentiment():
     try:
         data = request.get_json()
@@ -88,8 +109,11 @@ def analyze_sentiment():
             return jsonify({'error': 'No comments found'}), 404
 
         comments_analysis = []
-        sentiment_distribution = {'positive': 0, 'neutral': 0, 'negative': 0}
+        sentiment_distribution = {
+            'very negative': 0, 'negative': 0, 'neutral': 0, 'positive': 0, 'very positive': 0
+        }
 
+        
         for item in comments_response['items']:
             comment_text = item['snippet']['topLevelComment']['snippet']['textDisplay']
             
@@ -100,20 +124,28 @@ def analyze_sentiment():
             sentiment_scores = sia.polarity_scores(cleaned_text)
             compound_score = sentiment_scores['compound']
 
-            # Determine sentiment category
-            if compound_score >= 0.05:
-                sentiment = 'positive'
-            elif compound_score <= -0.05:
-                sentiment = 'negative'
-            else:
-                sentiment = 'neutral'
-                
-            sentiment_distribution[sentiment] += 1
+            # BERT sentiment analysis
+            bert_sentiment, bert_pred = predict_bert_sentiment(cleaned_text)
+
+            # Hybrid sentiment logic
+            if compound_score <= -0.5 and bert_pred <= 1:  # Strong negative from both
+                final_sentiment = "very negative"
+            elif compound_score <= -0.05 and bert_pred <= 2:  # Moderate negative
+                final_sentiment = "negative"
+            elif compound_score >= 0.5 and bert_pred >= 3:  # Strong positive from both
+                final_sentiment = "very positive"
+            elif compound_score >= 0.05 and bert_pred >= 2:  # Moderate positive
+                final_sentiment = "positive"
+            else:  # Default to neutral if mixed signals
+                final_sentiment = "neutral"
+
+            sentiment_distribution[final_sentiment] += 1
 
             comments_analysis.append({
                 'text': comment_text,
-                'sentiment': sentiment,
-                'score': compound_score
+                'sentiment': final_sentiment,
+                'vader_score': compound_score,
+                'bert_sentiment': bert_sentiment
             })
 
         return jsonify({
@@ -123,4 +155,3 @@ def analyze_sentiment():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-

@@ -477,16 +477,91 @@
                 }
             });
 
-            engagementAreaChart = new Chart(document.getElementById('engagementAreaChart').getContext('2d'), {
-                type: 'line',
-                data: { labels, datasets: [{ label: 'Engagement Rate (%)', data: engagementRates, borderColor: '#28a745', backgroundColor: 'rgba(40,167,69,0.2)', fill: true }] },
-                options: { 
-                    maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true, ticks: { color: '#e0e0e0' } } }, 
-                    plugins: { legend: { labels: { color: '#e0e0e0' } } }
+          // Modified Engagement vs Views chart (Dual-axis Line Chart)
+    engagementAreaChart = new Chart(document.getElementById('engagementAreaChart').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'Views',
+                    data: views,
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40,167,69,0.2)',
+                    fill: false,
+                    yAxisID: 'y-views'
+                },
+                {
+                    label: 'Engagement Rate (%)',
+                    data: engagementRates,
+                    borderColor: '#007BFF',
+                    backgroundColor: 'rgba(0,123,255,0.2)',
+                    fill: false,
+                    yAxisID: 'y-engagement'
                 }
-            });
+            ]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                'y-views': {
+                    type: 'linear',
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Views',
+                        color: '#e0e0e0'
+                    },
+                    ticks: {
+                        color: '#e0e0e0',
+                        beginAtZero: true
+                    },
+                    grid: {
+                        drawOnChartArea: false // Only show grid for engagement axis
+                    }
+                },
+                'y-engagement': {
+                    type: 'linear',
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Engagement Rate (%)',
+                        color: '#e0e0e0'
+                    },
+                    ticks: {
+                        color: '#e0e0e0',
+                        beginAtZero: true
+                    },
+                    grid: {
+                        drawOnChartArea: true
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#e0e0e0'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: { color: '#e0e0e0' }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label === 'Views') {
+                                return `${label}: ${context.parsed.y.toLocaleString()}`;
+                            } else {
+                                return `${label}: ${context.parsed.y.toFixed(2)}%`;
+                            }
+                        }
+                    }
+                }
+            }
         }
+    });
+}
 
         function generateReport() {
             const selectedRegion = document.getElementById('regionSelect').value;

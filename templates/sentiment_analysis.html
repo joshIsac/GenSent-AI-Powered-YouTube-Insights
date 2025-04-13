@@ -483,7 +483,7 @@
                     return {
                         text: sentiment.text,
                         sentiment: sentiment.sentiment,
-                        score: sentiment.score,
+                        vader_score: sentiment.vader_score,  // Updated to match backend
                         emotion: emotionMatch ? emotionMatch.emotion : '-'
                     };
                 });
@@ -515,15 +515,17 @@
             window.sentimentChart = new Chart(ctx, {
                 type: 'pie',
                 data: {
-                    labels: ['Positive', 'Neutral', 'Negative'],
+                    labels: ['Very Positive', 'Positive', 'Neutral', 'Negative', 'Very Negative'],
                     datasets: [{
                         label: 'Sentiment Distribution',
                         data: [
+                            sentimentData['very positive'] || 0,
                             sentimentData.positive || 0,
                             sentimentData.neutral || 0,
-                            sentimentData.negative || 0
+                            sentimentData.negative || 0,
+                            sentimentData['very negative'] || 0
                         ],
-                        backgroundColor: ['#4CAF50', '#FFC107', '#F44336']
+                        backgroundColor: ['#2ecc71', '#4CAF50', '#FFC107', '#F44336', '#e74c3c']
                     }]
                 },
                 options: {
@@ -546,6 +548,7 @@
                 const sentimentColor = getSentimentColor(comment.sentiment);
                 const emotionColor = getEmotionColor(comment.emotion);
                 const rowClass = index % 2 === 0 ? "bg-opacity-10" : "bg-opacity-0";
+                const score = comment.vader_score !== undefined ? comment.vader_score.toFixed(2) : "N/A";
 
                 const row = `<tr class="${rowClass}">
                     <td class="px-4 py-2">${comment.text}</td>
@@ -555,7 +558,7 @@
                     <td class="px-4 py-2 text-center">
                         <span class="sentiment-tag ${emotionColor}">${comment.emotion}</span>
                     </td>
-                    <td class="px-4 py-2 text-right">${comment.score.toFixed(2)}</td>
+                    <td class="px-4 py-2 text-right">${score}</td>
                 </tr>`;
                 tableBody.innerHTML += row;
             });
@@ -563,9 +566,11 @@
 
         function getSentimentColor(sentiment) {
             switch (sentiment.toLowerCase()) {
+                case "very positive": return "bg-green-600";
                 case "positive": return "bg-green-500";
                 case "neutral": return "bg-yellow-500";
                 case "negative": return "bg-red-500";
+                case "very negative": return "bg-red-600";
                 default: return "bg-gray-500";
             }
         }

@@ -11,6 +11,7 @@ from nltk.corpus import stopwords
 import re
 import sqlite3
 from googleapiclient.errors import HttpError
+import logging
 
 
 
@@ -123,9 +124,6 @@ def analyze_channel():
         return jsonify({'error': str(e)}), 500
 
     
-
-
-
 # Video Analytics for searched channel and searched video 
 
 def save_to_csv(video_data, file_name="video_insights.csv"):
@@ -674,4 +672,4 @@ def suggest_keywords():
         return jsonify({"message": f"Error: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True,port=5000)

@@ -47,7 +47,7 @@ class EmotionAnalyzer:
 
         # Load saved model weights
         try:
-            self.model.load_state_dict(torch.load('services/model/emotion_mlp_model.pth'))
+            self.model.load_state_dict(torch.load('services/model/emotion_mlp_model.pth', weights_only=True))
             self.model.eval()
         except FileNotFoundError:
             raise Exception("Trained model not found. Please train the model first.")

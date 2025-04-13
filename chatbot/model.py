@@ -14,102 +14,114 @@ class ChatbotModel:
             raise ValueError("GROQ_API_KEY is not set in environment variables.")
         
         self.groq_api = ChatGroq(
-            model="llama3-70b-8192",
-            temperature=0.8,
+            model="llama3-8b-8192",
+            temperature=0,
             max_tokens=2000,
             top_p=0.8,
             frequency_penalty=0.2,
             model_kwargs={"presence_penalty": 0.3}
         )
         
-        # Enhanced prompt template with genre context
-        self.prompt = ChatPromptTemplate.from_messages([
+        # Intent classification prompt
+        self.intent_prompt = ChatPromptTemplate.from_messages([
             ("system", 
-            """You are EngageBot X an expert in YouTube analytics assistant specializing in gaming content and a recommender system that provides an clean response and provide tips to improving channels and other issues related to the channel.
-Your goal is to assist content creators by providing clear, actionable advice based on their queries.
-Provide structured, easy-to-read insights for content creators.
-Your response should include:
-Use the following Example to respond:
-- Channel: PewDiePie
-- Genre: Gaming
-- Channel Insights: High subscriber count, consistent uploads, strong audience engagement.
-- Recent Video Analysis: Recent videos show a slight dip in viewership compared to average.
-- Content Suggestions: Explore trending games, collaborate with other creators.
-- and other personalized recommendations
-- Follow-up Questions: Prompt the user with a relevant follow-up to keep the conversation going.
-
-Respond clearly and concisely with bullet points line by line not like paragraph and emojis wherever required and also ensure it should'nt be clumped up and also provide the response like a normal chatbot appropriately and ensure whenever any content creators greet you also greet.
-your main instructions are given below
-- Respond to the user’s query directly and concisely.
-- Use bullet points for clarity and readability.
-- Include relevant data from the context when applicable.
-- Offer practical suggestions or insights tailored to the query.
-- If the user greets you, greet them back naturally.
-- If data is missing or incomplete, acknowledge it and provide general advice.
-"""),
-
+             """Classify the user's query into one of these intents: channel_insights, video_analysis, content_ideas, sentiment_analysis, or unknown. Respond with only the intent name."""),
             ("user", "{user_input}")
         ])
-        
+        self.intent_chain = self.intent_prompt | self.groq_api | StrOutputParser()
+
+        # Fallback response prompt
+        self.fallback_prompt = ChatPromptTemplate.from_messages([
+            ("system", 
+             """You are EngageBot X, a YouTube analytics assistant. The user's query didn't match a specific intent, but you must provide a helpful, context-aware response.
+Based on:
+- Channel Name: {channel_name}
+- Genre: {genre}
+- User Query: {user_input}
+- Tone: {tone}
+
+Respond clearly with bullet points, use emojis where appropriate, and offer actionable advice or ask for clarification if needed. If the user greets you, greet them back naturally. Avoid generic responses and tailor the answer to the query."""),
+            ("user", "{user_input}")
+        ])
+        self.fallback_chain = self.fallback_prompt | self.groq_api | StrOutputParser()
+
+        # Main response prompt
+        self.prompt = ChatPromptTemplate.from_messages([
+            ("system", 
+             """You are EngageBot X, an expert YouTube analytics assistant specializing in content optimization.
+Based on:
+- Channel Name: {channel_name}
+- Genre: {genre}
+- Channel Insights: {channel_insights}
+- Recent Video Analysis: {recent_analysis}
+- Content Suggestions: {content_suggestions}
+- User Query: {user_input}
+- Tone: {tone}
+
+Respond clearly with bullet points, use emojis where appropriate, and provide actionable advice. If the user greets you, greet them back naturally. If data is missing, acknowledge it and offer general advice."""),
+            ("user", "{user_input}")
+        ])
         self.output_parser = StrOutputParser()
         self.chain = self.prompt | self.groq_api | self.output_parser
         
         # Initialize YouTube chatbot with this model
         self.youtube_chatbot = YouTubeChatbot(self)
 
-    def generate_response(self, user_input, channel_name=None, genre=None):
-        """Generate a response using both Groq API and YouTube analytics."""
+    def classify_intent(self, user_input):
+        """Classify the user's intent using the Groq model."""
         try:
-            # Fetch data first (insights, recent videos, content suggestions)
-            youtube_response = self.youtube_chatbot.generate_response(user_input, channel_name, genre)
-        
+            intent = self.intent_chain.invoke({"user_input": user_input}).strip().lower()
+            return intent if intent in ["channel_insights", "video_analysis", "content_ideas", "sentiment_analysis", "unknown"] else "unknown"
+        except Exception:
+            return "unknown"
 
-            if "⚠️" in youtube_response or youtube_response.startswith("🤖"):
+    def generate_fallback_response(self, user_input, channel_name=None, genre=None, tone='neutral'):
+        """Generate a contextual response for unclear intents using Groq."""
+        try:
+            return self.fallback_chain.invoke({
+                "user_input": user_input,
+                "channel_name": channel_name or "Not specified",
+                "genre": genre or "Not specified",
+                "tone": tone
+            }).strip()
+        except Exception:
+            return "⚠️ I'm having trouble understanding. Could you clarify what you're asking about?"
 
-
-                # Fetch relevant data (e.g., recent video insights, audience trends)
-                channel_insights = self.youtube_chatbot.get_channel_insights(channel_name)
-                recent_analysis = self.youtube_chatbot.analyze_recent_videos(channel_name)
-                content_suggestions = self.youtube_chatbot.suggest_content_ideas(channel_name, genre)
-                
-                # Incorporate this data into the model prompt for Groq
+    def generate_response(self, user_input, channel_name=None, genre=None, tone='neutral'):
+        """Generate a response using YouTube analytics and Groq API."""
+        try:
+            youtube_response = self.youtube_chatbot.generate_response(user_input, channel_name, genre, tone)
+            if "⚠️" in youtube_response:
+                # Handle errors with a Groq-generated response
+                channel_insights = self.youtube_chatbot.get_channel_insights(channel_name) if channel_name else "No channel data available."
+                recent_analysis = self.youtube_chatbot.analyze_recent_videos(channel_name) if channel_name else "No video data available."
+                content_suggestions = self.youtube_chatbot.suggest_content_ideas(channel_name, genre) if channel_name else "No suggestions available."
                 groq_response = self.chain.invoke({
                     "user_input": user_input,
                     "channel_name": channel_name or "Not specified",
                     "genre": genre or "Not specified",
                     "channel_insights": channel_insights,
                     "recent_analysis": recent_analysis,
-                    "content_suggestions": content_suggestions
+                    "content_suggestions": content_suggestions,
+                    "tone": tone
                 })
-                
-                # Combine responses properly
-                if "⚠️" in youtube_response:
-                    return groq_response.strip()  # Fall back to Groq if no insights
-                else:
-                    return f"{youtube_response}\n\nAdditional Insights:\n{groq_response.strip()}"
-        
-
-
+                return groq_response.strip()
+            return youtube_response
         except ValueError as ve:
             return f"Error: {str(ve)}"
         except Exception as e:
             return f"Unexpected error: {str(e)}"
-        
 
-    
     def analyze_channel(self, channel_name, genre):
         """Analyze channel and provide comprehensive insights."""
         try:
-            # Check if necessary parameters are provided
             if not channel_name or not genre:
                 return {"error": "Channel name and genre must be provided.", "status": 400}
             
-            # Get analysis from YouTube chatbot
             basic_stats = self.youtube_chatbot.get_channel_insights(channel_name)
             recent_analysis = self.youtube_chatbot.analyze_recent_videos(channel_name)
             content_suggestions = self.youtube_chatbot.suggest_content_ideas(channel_name, genre)
             
-            # Remove any error messages
             results = []
             subscribers = "-"
             total_views = "-"
@@ -117,14 +129,13 @@ your main instructions are given below
             top_content = "No data available"
             recommendations = []
 
-
             if not basic_stats.startswith("⚠️"):
                 results.append(basic_stats)
-                subscribers = basic_stats.split("Subscribers: ")[1].split("\n")[0]  # Extract subscriber count
+                subscribers = basic_stats.split("Subscribers: ")[1].split("\n")[0]
             if not recent_analysis.startswith("⚠️"):
                 results.append(recent_analysis)
-                video_count = str(len(self.youtube_chatbot.fetch_videos_from_channel(channel_name)))  # Assumes video list available
-                total_views = recent_analysis.split("Average Views: ")[1].split("\n")[0]  # Approximate total views
+                video_count = str(len(self.youtube_chatbot.fetch_videos_from_channel(channel_name)))
+                total_views = recent_analysis.split("Average Views: ")[1].split("\n")[0]
             if not content_suggestions.startswith("⚠️"):
                 results.append(content_suggestions)
                 recommendations = [line[2:] for line in content_suggestions.split("\n") if line.startswith("• ")]
@@ -138,14 +149,14 @@ your main instructions are given below
                     "subscribers": subscribers,
                     "total_views": total_views,
                     "video_count": video_count,
-                    "top_content": top_content,  # Placeholder, requires actual top video data
+                    "top_content": top_content,
                     "recommendations": recommendations,
                     "insights": "\n\n".join(results),
                     "genre": genre
                 }
             }
-            
         except Exception as e:
             return {"error": str(e), "status": 500}
+
 # Create chatbot instance
 chatbot = ChatbotModel()

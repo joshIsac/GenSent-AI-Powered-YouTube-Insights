@@ -1,16 +1,32 @@
-from services import youtube
-from textblob import TextBlob
+# Standard library imports
+import logging
 import re
+import statistics
 from collections import Counter
-from database.channel_db import get_previous_video_stats, calculate_spike_percentage, store_spike_data
 from datetime import datetime
+
+# Third-party imports
+import pytz
 from langdetect import detect, DetectorFactory
 from langdetect.lang_detect_exception import LangDetectException
-import pytz
-import statistics  # Added for Content Consistency Index
+from textblob import TextBlob
+
+# Local imports
+from database.channel_db import (
+    get_previous_video_stats,
+    calculate_spike_percentage,
+    store_spike_data
+)
+from services import youtube
+
 
 # Ensure consistent language detection
 DetectorFactory.seed = 0
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 def get_channel_insights(channel_name):
     """Fetch comprehensive channel insights including stats, videos, competitors, and demographics."""
@@ -65,8 +81,18 @@ def get_channel_insights(channel_name):
                     'contentDetails': {'videoId': video_id}
                 }
                 previous_stats = get_previous_video_stats(video_data['title'])
-                video_data['spike_percentage'] = calculate_spike_percentage(video_data['views'], previous_stats.get('views', 0))
-                store_spike_data(channel_id, video_data['title'], video_data['views'], video_data['likes'], video_data['comments'], video_data['spike_percentage'])
+                video_data['spike_percentage'] = calculate_spike_percentage(
+                    video_data['views'],
+                    previous_stats.get('views', 0)
+                )
+                store_spike_data(
+                    channel_id,
+                    video_data['title'],
+                    video_data['views'],
+                    video_data['likes'],
+                    video_data['comments'],
+                    video_data['spike_percentage']
+                )
                 videos_data.append(video_data)
 
         # Competitor Benchmarking
@@ -84,19 +110,28 @@ def get_channel_insights(channel_name):
 
         # 1. Engagement Score (E) = (Likes + Comments) / Views * 100
         # Scale up to make it more impactful
-        e_score = ((total_likes + total_comments) / total_views * 1000) if total_views > 0 else 0
+        e_score = (
+            (total_likes + total_comments) / total_views * 1000
+            if total_views > 0 else 0
+        )
         e_score = min(100, e_score)  # Cap at 100
 
         # 2. Growth Score (G) = (Subscribers / Total Videos) * Scaling Factor
         # Increase scaling factor to 1.0 for better balance
-        g_score = (total_subscribers / total_videos * 1.0) if total_videos > 0 else 0
+        g_score = (
+            total_subscribers / total_videos * 1.0
+            if total_videos > 0 else 0
+        )
         g_score = min(100, g_score)  # Cap at 100
 
         # 3. Video Performance Score (V) = Avg Views per Recent Video / Max Possible Views * 100
         # Lower max_possible_views to 100,000 for more realistic scoring
         avg_views_per_video = total_views / len(videos_data) if videos_data else 0
         max_possible_views = 100000  # Adjusted for smaller channels
-        v_score = (avg_views_per_video / max_possible_views * 100) if max_possible_views > 0 else 0
+        v_score = (
+            avg_views_per_video / max_possible_views * 100
+            if max_possible_views > 0 else 0
+        )
         v_score = min(100, v_score)  # Cap at 100
 
         # Weights (sum to 1.0)
@@ -131,6 +166,7 @@ def get_channel_insights(channel_name):
 
     except Exception as e:
         return {'error': str(e)}
+
 
 def analyze_competitors(channel_name, channel_id, topics):
     """Fetch and compare competitor channels with accurate engagement and upload frequency."""
@@ -178,7 +214,10 @@ def analyze_competitors(channel_name, channel_id, topics):
             recent_views_sum = 0
             engagement_sum = 0
             for v in recent_videos:
-                v_stats = youtube.videos().list(part='statistics', id=v['contentDetails']['videoId']).execute()
+                v_stats = youtube.videos().list(
+                    part='statistics',
+                    id=v['contentDetails']['videoId']
+                ).execute()
                 if v_stats.get('items'):
                     stats = v_stats['items'][0]['statistics']
                     views = int(stats.get('viewCount', 0))
@@ -188,11 +227,17 @@ def analyze_competitors(channel_name, channel_id, topics):
 
             # Calculate upload frequency (Method 2: Monthly Average)
             if recent_videos:
-                publish_dates = [datetime.strptime(v['snippet']['publishedAt'], '%Y-%m-%dT%H:%M:%SZ') for v in recent_videos]
+                publish_dates = [
+                    datetime.strptime(v['snippet']['publishedAt'], '%Y-%m-%dT%H:%M:%SZ')
+                    for v in recent_videos
+                ]
                 if publish_dates:
                     min_date = min(publish_dates)
                     max_date = max(publish_dates)
-                    months_span = (max_date.year - min_date.year) * 12 + max_date.month - min_date.month + 1  # Months between min and max
+                    months_span = (
+                        (max_date.year - min_date.year) * 12 +
+                        max_date.month - min_date.month + 1
+                    )  # Months between min and max
                     upload_freq = len(recent_videos) / months_span if months_span > 0 else len(recent_videos)
                 else:
                     upload_freq = 0
@@ -209,14 +254,10 @@ def analyze_competitors(channel_name, channel_id, topics):
             })
 
         return competitors[:3]
+
     except Exception as e:
         return {'error': f"Competitor analysis failed: {str(e)}"}
 
-import logging
-
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 def analyze_demographics_and_interests(channel_id, videos_data, topics=None):
     """Estimate audience demographics and interests for any channel using public data."""
@@ -239,8 +280,10 @@ def analyze_demographics_and_interests(channel_id, videos_data, topics=None):
                     maxResults=50,  # Increase to 50 for richer sample
                     textFormat='plainText'
                 ).execute()
-                comments.extend([item['snippet']['topLevelComment']['snippet']['textDisplay'] 
-                               for item in comment_response.get('items', [])])
+                comments.extend([
+                    item['snippet']['topLevelComment']['snippet']['textDisplay']
+                    for item in comment_response.get('items', [])
+                ])
             except Exception as e:
                 logger.warning(f"Comments unavailable for {video_id}: {str(e)}")
 
@@ -265,8 +308,12 @@ def analyze_demographics_and_interests(channel_id, videos_data, topics=None):
         if comments or descriptions or tags:
             all_text = ' '.join(comments + descriptions + tags).lower()
             words = all_text.split()
-            common_words = Counter([w for w in words if w not in stop_words and len(w) > 3]).most_common(10)
-            interests.extend([word for word, _ in common_words if word not in interests])
+            common_words = Counter([
+                w for w in words if w not in stop_words and len(w) > 3
+            ]).most_common(10)
+            interests.extend([
+                word for word, _ in common_words if word not in interests
+            ])
         else:
             interests.append("No sufficient data")
         interests = interests[:5]  # Limit to top 5
@@ -275,10 +322,14 @@ def analyze_demographics_and_interests(channel_id, videos_data, topics=None):
         # Age Range
         youthful_topics = {'gaming', 'music', 'entertainment', 'lifestyle', 'vlog', 'comedy'}
         mature_topics = {'news', 'politics', 'education', 'finance', 'society'}
-        is_youthful = any(t.split('/')[-1].lower() in youthful_topics for t in topics or []) or \
-                      any(tag in youthful_topics for tag in tags)
-        is_mature = any(t.split('/')[-1].lower() in mature_topics for t in topics or []) or \
-                    any(tag in mature_topics for tag in tags)
+        is_youthful = (
+            any(t.split('/')[-1].lower() in youthful_topics for t in topics or []) or
+            any(tag in youthful_topics for tag in tags)
+        )
+        is_mature = (
+            any(t.split('/')[-1].lower() in mature_topics for t in topics or []) or
+            any(tag in mature_topics for tag in tags)
+        )
 
         if comments:
             sentiments = [TextBlob(comment).sentiment.polarity for comment in comments]
@@ -298,9 +349,10 @@ def analyze_demographics_and_interests(channel_id, videos_data, topics=None):
         # Geographic Distribution
         country_mentions = Counter()
         country_codes = {
-            'us': 'United States', 'usa': 'United States', 'uk': 'United Kingdom', 'in': 'India',
-            'ca': 'Canada', 'au': 'Australia', 'de': 'Germany', 'fr': 'France', 'jp': 'Japan', 
-            'br': 'Brazil', 'mx': 'Mexico', 'es': 'Spain', 'it': 'Italy', 'cn': 'China'
+            'us': 'United States', 'usa': 'United States', 'uk': 'United Kingdom',
+            'in': 'India', 'ca': 'Canada', 'au': 'Australia', 'de': 'Germany',
+            'fr': 'France', 'jp': 'Japan', 'br': 'Brazil', 'mx': 'Mexico',
+            'es': 'Spain', 'it': 'Italy', 'cn': 'China'
         }
         all_text = comments + descriptions + [v['title'].lower() for v in videos_data]
         for text in all_text:
@@ -308,7 +360,7 @@ def analyze_demographics_and_interests(channel_id, videos_data, topics=None):
                 if re.search(rf'\b{code}\b|\b{country.lower()}\b', text):
                     country_mentions[country] += 1
         if not country_mentions:
-            country_mentions.update(['United States', 'United Kingdom', 'India'])
+            country_mentions.update({'United States': 1, 'United Kingdom': 1, 'India': 1})
         total = sum(country_mentions.values())
         geographic_distribution = [
             {'country': country, 'percentage': round((count / total) * 100, 2)}
@@ -317,12 +369,17 @@ def analyze_demographics_and_interests(channel_id, videos_data, topics=None):
         logger.info(f"Geographic distribution: {geographic_distribution}")
 
         # Simulated age groups per country
-        age_weights = {'13-24': 0.3, '18-34': 0.5, '25-44': 0.2} if is_youthful else \
-                      {'13-24': 0.2, '18-34': 0.4, '25-44': 0.4}
+        age_weights = (
+            {'13-24': 0.3, '18-34': 0.5, '25-44': 0.2} if is_youthful else
+            {'13-24': 0.2, '18-34': 0.4, '25-44': 0.4}
+        )
         age_groups_per_country = {
             country: {
                 age: round(perc * weight, 1) for age, weight in age_weights.items()
-            } for country, perc in [(d['country'], d['percentage']) for d in geographic_distribution]
+            }
+            for country, perc in [
+                (d['country'], d['percentage']) for d in geographic_distribution
+            ]
         }
         logger.info(f"Age groups per country: {age_groups_per_country}")
 
