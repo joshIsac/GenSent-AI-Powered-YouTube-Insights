@@ -19,7 +19,7 @@ GenSent offers a suite of powerful features:
 
 ## Tech Stack
 
-- **Frontend**: HTML, CSS, Bootstrap 5, Boxicons
+- **Frontend**: HTML, CSS
 - **Backend**: Python, Flask
 - **APIs**: YouTube Data API v3
 - **Dependencies**: `google-api-python-client`, `flask`, `python-dotenv`
